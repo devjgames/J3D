@@ -23,7 +23,7 @@ Pipeline - manage OpenGL pipelines
 
 SpritePipeline - render text and sprites
 
-Font - manages a row/column fixed with bitmap font
+Font - manages a row/column fixed width bitmap font
 
 Sound - plays small wav sounds
 
@@ -31,7 +31,7 @@ UIManager - create and run a UI in the same place with built-in label, text fiel
 
 Resource - base class for all classes that need to be managed by a resource manager
 
-Mesh - an configurable mesh class
+Mesh - configurable mesh class
 
 MeshLoader - loads position/texture/normal meshes from OBJ files
 
