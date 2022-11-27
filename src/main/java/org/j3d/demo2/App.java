@@ -75,7 +75,7 @@ public class App {
                 
                 info += "\nRES = " + Resource.getInstances();
                 info += "\nCOL = " + collider.getTested();
-                info += "\nSPC = FS\nESC = Quit\nS   = Sync";
+                info += "\nSPC = FS\nS   = Sync\nESC = Quit";
 
                 projection.identity().perspective((float)Math.PI / 3, game.getAspectRatio(), 1, 25000);
                 target.add(offset, offset);

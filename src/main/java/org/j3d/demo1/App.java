@@ -75,7 +75,7 @@ public class App {
                 
                 info += "\nRES = " + Resource.getInstances();
                 info += "\nCOL = " + collider.getTested();
-                info += "\nSPC = FS\nESC = Quit\nS   = SYNC";
+                info += "\nSPC = FS\nS   = Sync\nESC = Quit";
 
                 sound.setVolume(0.5f - Math.min(eye.distance(400, 150, 0) / 600, 0.5f));
 
