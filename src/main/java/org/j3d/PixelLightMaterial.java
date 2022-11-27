@@ -14,7 +14,7 @@ import org.lwjgl.opengl.GL30;
 
 public class PixelLightMaterial extends Resource implements Material {
 
-    public static final int MAX_LIGHTS = 3;
+    public static final int MAX_LIGHTS = 6;
 
     public static class Light {
         public final Vector3f position = new Vector3f();

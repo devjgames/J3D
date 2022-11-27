@@ -1,6 +1,6 @@
 #version 150
 
-#define MAX_LIGHTS 3
+#define MAX_LIGHTS 6
 
 in vec3 fsInPosition;
 in vec2 fsInTextureCoordinate;

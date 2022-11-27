@@ -34,7 +34,9 @@ public class App {
             Vector3f direction = new Vector3f(1, 0, 0);
             Vector3f up = new Vector3f(0, 1, 0);
             Vector3f f = new Vector3f();
-            boolean down = false;
+            boolean spaceDown = false;
+            boolean sKeyDown = false;
+            boolean sync = true;
             Font font = game.getAssets().load(IO.file("assets/pics/font.fnt"));
             Matrix4f projection = new Matrix4f();
             Matrix4f view = new Matrix4f();
@@ -69,7 +71,11 @@ public class App {
             GLFW.glfwSwapInterval(1);
 
             while(game.run()) {
-                String info = "FPS = " + game.getFPS() + "\nRES = " + Resource.getInstances() + "\nCOL = " + collider.getTested() + "\nSPC = FS\nESC = Quit";
+                String info = "FPS = " + game.getFPS();
+                
+                info += "\nRES = " + Resource.getInstances();
+                info += "\nCOL = " + collider.getTested();
+                info += "\nSPC = FS\nESC = Quit\nS   = SYNC";
 
                 sound.setVolume(0.5f - Math.min(eye.distance(400, 150, 0) / 600, 0.5f));
 
@@ -110,12 +116,25 @@ public class App {
                     break;
                 }
                 if(game.isKeyDown(GLFW.GLFW_KEY_SPACE)) {
-                    if(!down) {
-                        down = true;
+                    if(!spaceDown) {
+                        spaceDown = true;
                         game.toggleFullscreen();
                     }
+                } else { 
+                    spaceDown = false;
+                }
+                if(game.isKeyDown(GLFW.GLFW_KEY_S)) {
+                    if(!sKeyDown) {
+                        sKeyDown = true;
+                        if(sync) {
+                            GLFW.glfwSwapInterval(0);
+                        } else {
+                            GLFW.glfwSwapInterval(1);
+                        }
+                        sync = !sync;
+                    }
                 } else {
-                    down = false;
+                    sKeyDown = false;
                 }
             }
         } finally {

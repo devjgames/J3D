@@ -3,7 +3,6 @@ package org.j3d.gpu.imaging;
 import java.io.File;
 import java.util.Vector;
 
-import org.j3d.BlendState;
 import org.j3d.Font;
 import org.j3d.Game;
 import org.j3d.IO;
@@ -42,27 +41,32 @@ public class App {
 
                 if(renderTarget == null) {
                     renderTarget = game.getResources().manage(new RenderTarget(w, h, PixelFormat.COLOR));
+                    renderTarget.begin();
+                    Utils.clear(0, 0, 0, 1);
+                    renderTarget.end();
                 } else if(w > 1 && h > 1 && (w != renderTarget.getTexture(0).width || h != renderTarget.getTexture(0).height)) {
                     game.getResources().unManage(renderTarget);
                     renderTarget = game.getResources().manage(new RenderTarget(w, h, PixelFormat.COLOR));
                     render = true;
+                    renderTarget.begin();
+                    Utils.clear(0, 0, 0, 1);
+                    renderTarget.end();
                 }
-                renderTarget.begin();
                 if(image != null) {
                     if(render) {
                         render = false;
+                        renderTarget.begin();
+                        Utils.clear(0, 0, 0, 1);
                         image.render(renderTarget.getTexture(0));
+                        renderTarget.end();
                     }
                 }
-                renderTarget.end();
                 game.beginRenderTarget();
                 Utils.clear(0, 0, 0, 1);
                 game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
-                Utils.setBlendState(BlendState.OPAQUE);
                 game.getSpritePipeline().beginSprite(renderTarget.getTexture(0));
                 game.getSpritePipeline().push(0, 0, w, h, 0, 50, w, h, 1, 1, 1, 1, true);
                 game.getSpritePipeline().endSprite();
-                Utils.setBlendState(BlendState.ALPHA);
                 game.getSpritePipeline().beginSprite(manager.getFont());
                 String info = "FPS=" + game.getFPS() + ", RES=" + Resource.getInstances();
                 int ch = manager.getFont().getCharHeight();
