@@ -77,7 +77,7 @@ public class App {
                 info += "\nCOL = " + collider.getTested();
                 info += "\nSPC = FS\nS   = Sync\nESC = Quit";
 
-                sound.setVolume(0.5f - Math.min(eye.distance(400, 150, 0) / 600, 0.5f));
+                sound.setVolume(1 - Math.min(eye.distance(400, 150, 0) / 300, 1));
 
                 projection.identity().perspective((float)Math.PI / 3, game.getAspectRatio(), 1, 25000);
                 eye.add(direction, direction);

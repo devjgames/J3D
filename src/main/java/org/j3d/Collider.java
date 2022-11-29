@@ -10,12 +10,12 @@ public class Collider {
     public static interface TriangleSelector {
         boolean getEnabled();
         void setEnabled(boolean enabled);
-        void intersect(Collider collider);
-        void resolve(BoundingBox bounds, Collider collider);
+        boolean intersect(Collider collider);
+        boolean resolve(Collider collider);
     }
     
     public static interface ContactListener {
-        void contactMade(Triangle triangle) throws Exception;
+        void contactMade(TriangleSelector selector) throws Exception;
     }
 
     public final Vector3f velocity = new Vector3f();
@@ -27,7 +27,10 @@ public class Collider {
     public float roofSlope = 45;
     public float speed = 125;
     public float radius = 16;
+    public float intersectionBuffer = 0;
+    public int intersectionBits = 0xFF;
     public int loopCount = 3;
+    public final BoundingBox resolveBounds = new BoundingBox();
 
     private final Vector3f groundNormal = new Vector3f();
     private final Vector3f rPos = new Vector3f();
@@ -37,16 +40,12 @@ public class Collider {
     private final Vector3f u = new Vector3f();
     private final Vector3f f = new Vector3f();
     private final Matrix4f groundMatrix = new Matrix4f();
-    private final BoundingBox bounds = new BoundingBox();
     private boolean onGround = false;
     private boolean hitRoof = false;
     private final Vector<ContactListener> listeners = new Vector<>();
     private final Vector<TriangleSelector> selectors = new Vector<>();
-    private final Triangle triangle1 = new Triangle();
-    private Triangle hit = null;
+    private final Triangle triangle = new Triangle();
     private int tested = 0;
-    private int bitFlags = 0;
-    private float buffer = 0;
     private Vector3f position = null;
 
     public boolean getOnGround() {
@@ -61,6 +60,10 @@ public class Collider {
         return tested;
     }
 
+    public Triangle getTriangle() {
+        return triangle;
+    }
+
     public void addTriangleSelector(TriangleSelector selector) {
         selectors.add(selector);
     }
@@ -69,30 +72,34 @@ public class Collider {
         listeners.add(listener);
     }
 
-    public void intersect(Triangle triangle) {
-        if((triangle.tag & bitFlags) != 0) {
-            if(triangle.intersects(origin, direction, buffer, time)) {
-                triangle1.set(triangle);
-                hit = triangle1;
+    public boolean selectorIntersect(Triangle triangle) {
+        if((triangle.tag & intersectionBits) != 0) {
+            if(triangle.intersects(origin, direction, intersectionBuffer, time)) {
+                triangle.set(triangle);
+                return true;
             }
         }
+        return false;
     }
 
-    public void resolve(Triangle triangle) {
+    public boolean selectorResolve(Triangle triangle) {
         if(triangle.resolve(rPos, radius, position, rNormal, time)) {
-            triangle1.set(triangle);
-            hit = triangle1;
+            triangle.set(triangle);
+            return true;
         }
         tested++;
+
+        return false;
     }
 
-    public Triangle intersect(int bitFlags, float buffer) {
-        hit = null;
-        this.buffer = buffer;
-        this.bitFlags = bitFlags;
+    public TriangleSelector intersect() {
+        TriangleSelector hit = null;
+
         for(TriangleSelector selector : selectors) {
             if(selector.getEnabled()) {
-                selector.intersect(this);
+                if(selector.intersect(this)) {
+                    hit = selector;
+                }
             }
         }
         return hit;
@@ -112,16 +119,19 @@ public class Collider {
         hitRoof = false;
         groundNormal.zero();
         for(int i = 0; i < loopCount; i++) {
-            bounds.min.set(position).sub(radius, radius, radius);
-            bounds.max.set(position).add(radius, radius, radius);
+            resolveBounds.min.set(position).sub(radius, radius, radius);
+            resolveBounds.max.set(position).add(radius, radius, radius);
             time[0] = radius;
             rPos.zero();
             rNormal.zero();
 
-            hit = null;
+            TriangleSelector hit = null;
+
             for(TriangleSelector selector : selectors) {
                 if(selector.getEnabled()) {
-                    selector.resolve(bounds, this);
+                    if(selector.resolve(this)) {
+                        hit = selector;
+                    }
                 }
             }
             if(hit != null) {

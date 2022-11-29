@@ -24,43 +24,55 @@ public class OctTree {
         }
 
         @Override
-        public void intersect(Collider collider) {
-            intersect(octTree, collider);;
+        public boolean intersect(Collider collider) {
+            return intersect(octTree, collider);
         }
 
-        private void intersect(OctTree tree, Collider collider) {
+        private boolean intersect(OctTree tree, Collider collider) {
+            boolean hit = false;
             float t = collider.time[0];
 
             collider.time[0] = Float.MAX_VALUE;
             if(tree.bounds.intersects(collider.origin, collider.direction, collider.time)) {
                 collider.time[0] = t;
                 for(Triangle triangle : tree.getTriangles()) {
-                    collider.intersect(triangle);
+                    if(collider.selectorIntersect(triangle)) {
+                        hit = true;
+                    }
                 }
                 for(OctTree child : tree.getChildren()) {
-                    intersect(child, collider);
+                    if(intersect(child, collider)) {
+                        hit = true;
+                    }
                 }
             } else {
                 collider.time[0] = t;
             }
+            return hit;
         }
 
         @Override
-        public void resolve(BoundingBox bounds, Collider collider) {
-            resolve(octTree, bounds, collider);
+        public boolean resolve(Collider collider) {
+            return resolve(octTree, collider);
         }
 
-        private void resolve(OctTree tree, BoundingBox bounds, Collider collider) {
-            if(tree.bounds.touches(bounds)) {
+        private boolean resolve(OctTree tree, Collider collider) {
+            boolean hit = false;
+
+            if(tree.bounds.touches(collider.resolveBounds)) {
                 for(Triangle triangle : tree.getTriangles()) {
-                    collider.resolve(triangle);
+                    if(collider.selectorResolve(triangle)) {
+                        hit = true;
+                    }
                 }
                 for(OctTree child : tree.getChildren()) {
-                    resolve(child, bounds, collider);
+                    if(resolve(child, collider)) {
+                        hit = true;
+                    }
                 }
             }
+            return hit;
         }
-        
     }
 
     public static OctTree create(Vector<Triangle> triangles, int minTrisPerTree) {

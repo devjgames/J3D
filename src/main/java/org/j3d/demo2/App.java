@@ -67,6 +67,7 @@ public class App {
                 }
             }
             collider.addTriangleSelector(new OctTree.Selector(OctTree.create(triangles,16)));
+            collider.radius = 20;
 
             GLFW.glfwSwapInterval(1);
 
@@ -85,7 +86,7 @@ public class App {
                 cube.model.identity().translate(target).rotate(radians, 0, 1, 0);
                 
                 game.beginRenderTarget();
-                Utils.clear(0, 0, 0, 1);
+                Utils.clear(0, 0, 1, 1);
                 mesh.render(projection, view);
                 cube.render(projection, view);
                 game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
@@ -126,9 +127,10 @@ public class App {
 
                 collider.origin.set(target);
                 offset.normalize(collider.direction);
-                collider.time[0] = length + 14;
-                if(collider.intersect(0xFF, 1) != null) {
-                    length = Math.min(length, collider.time[0]) - 14;
+                collider.time[0] = length + 19;
+                collider.intersectionBuffer = 1;
+                if(collider.intersect() != null) {
+                    length = Math.min(length, collider.time[0]) - 19;
                 }
                 offset.normalize().mul(length);
 
