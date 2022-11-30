@@ -248,12 +248,12 @@ public class Game {
     
             if(renderTarget != null) {
                 if(w > 1 && h > 1 && (w != renderTarget.getTexture(0).width || h != renderTarget.getTexture(0).height)) {
-                    System.out.println("creating render target -> " + w + " x " + h + ", scale -> " + getFramebufferScale() + " ...");
+                    Log.log(1, "creating render target -> " + w + " x " + h + ", scale -> " + getFramebufferScale() + " ...");
                     resources.unManage(renderTarget);
                     renderTarget = resources.manage(new RenderTarget(w, h, PixelFormat.COLOR));
                 }
             } else {
-                System.out.println("creating render target -> " + w + " x " + h + ", scale -> " + getFramebufferScale() + " ...");
+                Log.log(1, "creating render target -> " + w + " x " + h + ", scale -> " + getFramebufferScale() + " ...");
                 renderTarget = resources.manage(new RenderTarget(w, h, PixelFormat.COLOR));
             }
             renderTarget.begin();
@@ -302,12 +302,12 @@ public class Game {
     }
 
     public void destroy() throws Exception {
-        System.out.println(Resource.getInstances() + " allocated resources");
+        Log.log(1, Resource.getInstances() + " allocated resources");
         checkOpenALErrors(device);
         ALC10.alcDestroyContext(context);
         ALC10.alcCloseDevice(device);
         getResources().destroy();
-        System.out.println(Resource.getInstances() + " allocated resources");
+        Log.log(1, Resource.getInstances() + " allocated resources");
         GLFW.glfwDestroyWindow(window);
         GLFW.glfwTerminate();
     }
@@ -315,11 +315,11 @@ public class Game {
     private void checkOpenALErrors(long device) {
         int error = ALC10.alcGetError(device);
         if (error != ALC10.ALC_NO_ERROR) {
-            System.out.println("OpenAL Context Error - " + error);
+            Log.log(0, "OpenAL Context Error - " + error);
         }
         error = AL10.alGetError();
         if (error != AL10.AL_NO_ERROR) {
-            System.out.println("OpenAL Error - " + error);
+            Log.log(0, "OpenAL Error - " + error);
         }
     }
 }

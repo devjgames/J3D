@@ -7,6 +7,7 @@ import org.j3d.Collider;
 import org.j3d.Font;
 import org.j3d.Game;
 import org.j3d.IO;
+import org.j3d.Log;
 import org.j3d.Mesh;
 import org.j3d.MeshPart;
 import org.j3d.OctTree;
@@ -26,6 +27,8 @@ public class App {
 
     public static void main(String[] args) throws Exception {
         Game game = null;
+
+        Log.level = 2;
 
         try {
             game = new Game(1000, 700, false);
@@ -202,7 +205,7 @@ public class App {
             }
         }
 
-        if(new LightMapper().map(file, 128, 128, 128, iters, renderer, 1)) {
+        if(new LightMapper().map(file, 128, 128, 128, iters, renderer)) {
             Texture texture = game.getAssets().load(file);
 
             if(linear) {
@@ -217,7 +220,7 @@ public class App {
                 material.emissiveColor.set(1, 1, 1, 1);
             }
         } else {
-            System.out.println("failed to allocate light map");
+            Log.log(0, "failed to allocate light map");
             for(MeshPart part : mesh) {
                 material = (DualTextureMaterial)part.material;
                 material.texture2 = null;

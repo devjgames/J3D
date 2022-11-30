@@ -43,12 +43,12 @@ public class Texel extends Resource {
         pixels = BufferUtils.createFloatBuffer(viewSize * viewSize * 4);
     }
 
-    void setPixel(int x, int y) {
+    public void setPixel(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    void updateTexels() {
+    public void updateTexels() {
         texture.bind();
         GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, texture.width, texture.height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
         texture.unBind();

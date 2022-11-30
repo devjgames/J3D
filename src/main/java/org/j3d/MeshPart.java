@@ -93,7 +93,7 @@ public class MeshPart {
 
     public void calcBounds() {
         if(objBounds.isEmpty()) {
-            System.out.println("calculating mesh part object bounds");
+            Log.log(2, "calculating mesh part object bounds");
             objBounds.clear();
             for(int i = 0; i != getVertexCount(); i++) {
                 objBounds.add(vertexAt(i, 0), vertexAt(i, 1), vertexAt(i, 2));

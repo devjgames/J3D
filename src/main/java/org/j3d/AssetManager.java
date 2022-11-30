@@ -30,7 +30,7 @@ public class AssetManager extends Resource {
         String key = file.getPath();
 
         if (!assets.containsKey(key)) {
-            System.out.println("loading '" + key + "' ...");
+            Log.log(1, "loading '" + key + "' ...");
             assets.put(key, assetLoaders.get(IO.extension(file)).load(file, this));
         }
         return (T) assets.get(key);

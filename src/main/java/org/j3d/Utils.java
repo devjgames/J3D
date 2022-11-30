@@ -82,7 +82,7 @@ public class Utils {
 
     public static IntBuffer ensureCapacity(IntBuffer iBuf, int growBy) {
         if (iBuf.position() == iBuf.capacity()) {
-            System.out.println("increasing index buffer capacity to " + (iBuf.capacity() + growBy) + " ...");
+            Log.log(2, "increasing index buffer capacity to " + (iBuf.capacity() + growBy) + " ...");
             IntBuffer nBuf = BufferUtils.createIntBuffer(iBuf.capacity() + growBy);
             int position = iBuf.position();
             iBuf.flip();
@@ -96,7 +96,7 @@ public class Utils {
 
     public static FloatBuffer ensureCapacity(FloatBuffer vBuf, int growBy) {
         if (vBuf.position() == vBuf.capacity()) {
-            System.out.println("increasing vertex buffer capacity to " + (vBuf.capacity() + growBy) + " ...");
+            Log.log(2, "increasing vertex buffer capacity to " + (vBuf.capacity() + growBy) + " ...");
             FloatBuffer nBuf = BufferUtils.createFloatBuffer(vBuf.capacity() + growBy);
             int position = vBuf.position();
             vBuf.flip();
@@ -110,7 +110,7 @@ public class Utils {
 
     public static IntBuffer trimCapacity(IntBuffer iBuf) {
         if (iBuf.position() < iBuf.capacity()) {
-            System.out.println("trimming index buffer capacity to " + iBuf.position() + " ...");
+            Log.log(2, "trimming index buffer capacity to " + iBuf.position() + " ...");
             IntBuffer nBuf = BufferUtils.createIntBuffer(iBuf.position());
             iBuf.flip();
             nBuf.put(iBuf);
@@ -122,7 +122,7 @@ public class Utils {
 
     public static FloatBuffer trimCapacity(FloatBuffer vBuf) {
         if (vBuf.position() < vBuf.capacity()) {
-            System.out.println("trimming vertex buffer capacity to " + vBuf.position() + " ...");
+            Log.log(2, "trimming vertex buffer capacity to " + vBuf.position() + " ...");
             FloatBuffer nBuf = BufferUtils.createFloatBuffer(vBuf.position());
             vBuf.flip();
             nBuf.put(vBuf);

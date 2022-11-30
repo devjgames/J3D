@@ -25,7 +25,7 @@ public class Pipeline extends Resource {
 
         int status = GL20.glGetShaderi(vs, GL20.GL_COMPILE_STATUS);
         if (status == GL11.GL_FALSE) {
-            System.out.println(GL20.glGetShaderInfoLog(vs));
+            Log.log(0, GL20.glGetShaderInfoLog(vs));
             GL20.glDeleteShader(vs);
             GL20.glDeleteShader(fs);
             destroy();
@@ -36,7 +36,7 @@ public class Pipeline extends Resource {
         GL20.glCompileShader(fs);
         status = GL20.glGetShaderi(fs, GL20.GL_COMPILE_STATUS);
         if (status == GL11.GL_FALSE) {
-            System.out.println(GL20.glGetShaderInfoLog(fs));
+            Log.log(0, GL20.glGetShaderInfoLog(fs));
             GL20.glDeleteShader(vs);
             GL20.glDeleteShader(fs);
             destroy();
@@ -51,7 +51,7 @@ public class Pipeline extends Resource {
         GL20.glLinkProgram(program);
         status = GL20.glGetProgrami(program, GL20.GL_LINK_STATUS);
         if (status == GL11.GL_FALSE) {
-            System.out.println(GL20.glGetProgramInfoLog(program));
+            Log.log(0, GL20.glGetProgramInfoLog(program));
             GL20.glDeleteProgram(program);
             program = 0;
             destroy();
@@ -61,13 +61,13 @@ public class Pipeline extends Resource {
             GL20.glBindAttribLocation(program, i, attributes[i]);
             int attr = GL20.glGetAttribLocation(program, attributes[i]);
             if (attr < 0) {
-                System.out.println("attribute '" + attributes[i] + "' not found!");
+                Log.log(0, "attribute '" + attributes[i] + "' not found!");
             }
         }
         GL20.glLinkProgram(program);
         status = GL20.glGetProgrami(program, GL20.GL_LINK_STATUS);
         if (status == GL11.GL_FALSE) {
-            System.out.println(GL20.glGetProgramInfoLog(program));
+            Log.log(0, GL20.glGetProgramInfoLog(program));
             GL20.glDeleteProgram(program);
             program = 0;
             destroy();
@@ -82,7 +82,7 @@ public class Pipeline extends Resource {
     public int getUniformLocation(String name) {
         int l = GL20.glGetUniformLocation(program, name);
         if (l < 0) {
-            System.out.println("location '" + name + "' not found!");
+            Log.log(0, "location '" + name + "' not found!");
         }
         return l;
     }
