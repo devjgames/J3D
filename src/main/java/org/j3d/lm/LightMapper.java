@@ -9,14 +9,16 @@ import java.awt.image.BufferedImage;
 import org.j3d.Mesh;
 import org.j3d.MeshPart;
 import org.joml.GeometryUtils;
+import org.joml.Intersectionf;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.GL11;
 
 public class LightMapper {
 
     private final Vector3f v1 = new Vector3f();
     private final Vector3f v2 = new Vector3f();
-
+    private final Vector3f normal = new Vector3f();
+    private final Vector3f edgeNormal = new Vector3f();
+    
     public boolean map(File file, int width, int height, int viewSize, int iterations, Renderer renderer, int logLevel) throws Exception {
         Mesh mesh = renderer.getMesh();
         int px = 0;
@@ -150,6 +152,15 @@ public class LightMapper {
                     part.setVertexAt(v, 6, t);
                 }
 
+                if(texel != null) {
+                    for(int tx = px; tx != px + w; tx++) {
+                        for(int ty = py; ty != py + h; ty++) {
+                            texel.setPixel(tx, ty);
+                            texel.setColor(0, 0, 0);
+                        }
+                    }
+                }
+
                 px += w;
             }
             part.bufferVertices(false);
@@ -159,7 +170,9 @@ public class LightMapper {
             return true;
         }
 
-        texel.projection.identity().perspective((float)Math.PI / 2, 1, 0.1f, 10000);
+        texel.projection.identity().perspective(120 * (float)Math.PI / 180, 1, 0.1f, 10000);
+
+        texel.updateTexels();
 
         for(int iter = 0; iter < iterations; iter++) {
             if(logLevel > 0) {
@@ -169,6 +182,8 @@ public class LightMapper {
             px = 0;
             py = 0;
             mh = 0;
+
+            int zero = 0;
             
             for(MeshPart part : mesh) {
                 for(int i = 0; i != part.getFaceCount(); i++) {
@@ -284,18 +299,6 @@ public class LightMapper {
                         System.out.println(px + ", " + py + " : " + w + " x " + h);
                     }
 
-                    if(iter == 0) {
-                        for(int tx = px; tx != px + w; tx++) {
-                            for(int ty = py; ty != py + h; ty++) {
-                                int j = ty * width * 4 + tx * 4;
-
-                                texel.buf.put(j++, (byte)0);
-                                texel.buf.put(j++, (byte)0);
-                                texel.buf.put(j, (byte)0);
-                            }
-                        }
-                    }
-
                     for(int tx = px; tx != px + w; tx++) {
                         for(int ty = py; ty != py + h; ty++) {
                             float s = (tx + 0.5f) / (float)width;
@@ -312,34 +315,88 @@ public class LightMapper {
                             float ey = w0 * y1 + w1 * y3 + w2 * y2;
                             float ez = w0 * z1 + w1 * z3 + w2 * z2;
 
+                            boolean edge = false;
+
+                            for(MeshPart p : mesh) {
+                                for(int k = 0; k != p.getFaceCount(); k++) {
+                                    if(p == part) {
+                                        if(k == i) {
+                                            continue;
+                                        }
+                                    }
+
+                                    float kx1 = p.vertexAt(p.faceVertexAt(k, 0), 0);
+                                    float ky1 = p.vertexAt(p.faceVertexAt(k, 0), 1);
+                                    float kz1 = p.vertexAt(p.faceVertexAt(k, 0), 2);
+                                    float kx2 = p.vertexAt(p.faceVertexAt(k, 1), 0);
+                                    float ky2 = p.vertexAt(p.faceVertexAt(k, 1), 1);
+                                    float kz2 = p.vertexAt(p.faceVertexAt(k, 1), 2);
+                                    float kx3 = p.vertexAt(p.faceVertexAt(k, 2), 0);
+                                    float ky3 = p.vertexAt(p.faceVertexAt(k, 2), 1);
+                                    float kz3 = p.vertexAt(p.faceVertexAt(k, 2), 2);
+
+                                    GeometryUtils.normal(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, normal);
+
+                                    for(int m = 0; m != p.getFaceVertexCount(k); m++) {
+                                        int mv1 = p.faceVertexAt(k, m);
+                                        int mv2 = p.faceVertexAt(k, (m + 1) % p.getFaceVertexCount(k));
+                                        float mx1 = p.vertexAt(mv1, 0);
+                                        float my1 = p.vertexAt(mv1, 1);
+                                        float mz1 = p.vertexAt(mv1, 2);
+                                        float mx2 = p.vertexAt(mv2, 0);
+                                        float my2 = p.vertexAt(mv2, 1);
+                                        float mz2 = p.vertexAt(mv2, 2);
+                                        
+                                        Intersectionf.findClosestPointOnLineSegment(mx1, my1, mz1, mx2, my2, mz2, ex, ey, ez, this.v1);
+
+                                        if(this.v1.distance(ex, ey, ez) < 8) {
+                                            edge = normal.dot(nx, ny, nz) < 0.1f;
+                                            edgeNormal.set(normal);
+                                            break;
+                                        }
+                                    }
+                                    if(edge) {
+                                        break;
+                                    }
+                                }
+                                if(edge) {
+                                    break;
+                                }
+                            }
+
                             texel.setPixel(tx, ty);
                             texel.direction.set(nx, ny, nz);
                             texel.eye.set(ex, ey, ez);
 
-                            setColor(texel);
+                            if(edge) {
+                                edgeNormal.mul(8);
+                                texel.eye.add(edgeNormal);
+                                texel.setColor(0, 0, 0);
+                                zero++;
+                            } 
+                            setColor(texel, edge);
                         }
                     }
-    
+
                     px += w;
                 }
             }
+            texel.updateTexels();
 
-            texel.texture.bind();
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, texel.buf);
-            texel.texture.unBind();
+            if(logLevel > 0) {
+                System.out.println("edge texels = " + zero);
+            }
         }
+
 
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int[] rgba = new int[width * height];
 
         for(int x = 0; x != width; x++) {
             for(int y = 0; y != height; y++) {
-                int i = y * width * 4 + x * 4;
-                int r = ((int)texel.buf.get(i + 0)) & 0xFF;
-                int g = ((int)texel.buf.get(i + 1)) & 0xFF;
-                int b = ((int)texel.buf.get(i + 2)) & 0xFF;
+                texel.setPixel(x, y);
                 
-                rgba[y * width + x] = 0xFF000000 | ((r << 16) & 0xFF0000) | ((g << 8) & 0xFF00) | (b & 0xFF);
+                rgba[y * width + x] = texel.getColor();
             }
         }
         image.setRGB(0, 0, width, height, rgba, 0, width);
@@ -351,7 +408,7 @@ public class LightMapper {
         return true;
     }
 
-    protected void setColor(Texel texel) {
+    protected void setColor(Texel texel, boolean edge) {
         GeometryUtils.perpendicular(texel.direction, v1, v2);
         v1.normalize();
         v2.normalize();
@@ -373,6 +430,12 @@ public class LightMapper {
         r /= n;
         g /= n;
         b /= n;
+
+        if(edge) {
+            r *= 0.75f;
+            g *= 0.75f;
+            b *= 0.75f;
+        }
 
         texel.setColor(r, g, b);
     }

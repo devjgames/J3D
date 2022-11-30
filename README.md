@@ -37,3 +37,5 @@ MeshLoader - loads position/texture/normal meshes from OBJ files
 
 Collider - class for resolving player movement against triangles in a scene
 
+LightMapper - extendable light mapping system, uses iterative texel render target method, works best for quad primitives with no hidden faces
+

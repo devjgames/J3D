@@ -20,9 +20,8 @@ public class Texel extends Resource {
     public final Vector3f direction = new Vector3f();
     public final FloatBuffer pixels;
     
-    final Texture texture;
-    final ByteBuffer buf;
-
+    private final Texture texture;
+    private final ByteBuffer buf;
     private Renderer renderer;
     private RenderTarget target;
     private int x, y;
@@ -47,6 +46,12 @@ public class Texel extends Resource {
     void setPixel(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    void updateTexels() {
+        texture.bind();
+        GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, texture.width, texture.height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+        texture.unBind();
     }
 
     public void render() {
@@ -81,7 +86,17 @@ public class Texel extends Resource {
 
         buf.put(i++, br);
         buf.put(i++, bg);
-        buf.put(i, bb);
+        buf.put(i++, bb);
+        buf.put(i, (byte)255);
+    }
+
+    public int getColor() {
+        int i = y * texture.width * 4 + x * 4;
+        int r = ((int)buf.get(i + 0)) & 0xFF;
+        int g = ((int)buf.get(i + 1)) & 0xFF;
+        int b = ((int)buf.get(i + 2)) & 0xFF;
+        
+        return 0xFF000000 | ((r << 16) & 0xFF0000) | ((g << 8) & 0xFF00) | (b & 0xFF);
     }
 
     @Override

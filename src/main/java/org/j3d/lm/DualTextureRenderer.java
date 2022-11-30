@@ -15,7 +15,7 @@ import org.joml.Vector4f;
 
 public class DualTextureRenderer implements Renderer {
 
-    public final Vector4f backgroundColor = new Vector4f(1, 1, 1, 1);
+    public final Vector4f backgroundColor = new Vector4f(0, 0, 0, 1);
 
     private Mesh mesh = new Mesh();
 
