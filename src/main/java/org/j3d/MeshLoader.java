@@ -23,7 +23,7 @@ public class MeshLoader implements AssetLoader {
                 part.push(vertex.normal.x, vertex.normal.y, vertex.normal.z);
             }
             for(int[] face: dataPart.faces) {
-                part.push(face);
+                part.pushFace(face);
             }
             part.trim();
             part.bufferIndices();;

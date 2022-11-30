@@ -21,6 +21,7 @@ public class MeshPart {
     private final Vector<int[]> faces = new Vector<>();
     private int vertexCount = 0;
     private final Matrix4f matrix = new Matrix4f();
+    private final BoundingBox objBounds = new BoundingBox();
 
     public MeshPart(Mesh mesh, int stride) {
         this.stride = stride;
@@ -57,7 +58,7 @@ public class MeshPart {
         return faces.get(i)[j];
     }
 
-    public void push(int ...indices) {
+    public void pushFace(int ...indices) {
         int tris = indices.length - 2;
 
         iBuf = Utils.ensureCapacity(iBuf, tris * 3 + 3000);
@@ -91,11 +92,16 @@ public class MeshPart {
     }
 
     public void calcBounds() {
-        bounds.clear();
-        for(int i = 0; i != getVertexCount(); i++) {
-            bounds.add(vertexAt(i, 0), vertexAt(i, 1), vertexAt(i, 2));
+        if(objBounds.isEmpty()) {
+            System.out.println("calculating mesh part object bounds");
+            objBounds.clear();
+            for(int i = 0; i != getVertexCount(); i++) {
+                objBounds.add(vertexAt(i, 0), vertexAt(i, 1), vertexAt(i, 2));
+            }
         }
-        bounds.transform(model);
+        bounds.min.set(objBounds.min);
+        bounds.max.set(objBounds.max);
+        bounds.transform(matrix.set(mesh.model).mul(model));
     }
 
     public void push(float x) {

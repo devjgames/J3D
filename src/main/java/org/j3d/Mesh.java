@@ -28,9 +28,9 @@ public class Mesh implements Iterable<MeshPart> {
     public void calcBounds() {
         bounds.clear();
         for(MeshPart part : this) {
+            part.calcBounds();
             bounds.add(part.bounds);
         }
-        bounds.transform(model);
     }
 
     public void render(Matrix4f projection, Matrix4f view) {
