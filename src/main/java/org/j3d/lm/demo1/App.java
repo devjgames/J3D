@@ -17,8 +17,8 @@ import org.j3d.Texture;
 import org.j3d.Triangle;
 import org.j3d.Utils;
 import org.j3d.lm.DualTextureMaterial;
-import org.j3d.lm.DualTextureRenderer;
 import org.j3d.lm.LightMapper;
+import org.j3d.lm.Surface;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
@@ -33,11 +33,7 @@ public class App {
         try {
             game = new Game(1000, 700, false);
 
-            DualTextureRenderer renderer = new DualTextureRenderer();
-
-            renderer.load(IO.file("assets/meshes/lm1.obj"), game.getAssets());
-
-            Mesh mesh = renderer.getMesh();
+            Mesh mesh = DualTextureMaterial.load(IO.file("assets/meshes/lm1.obj"), game.getAssets());
             Collider collider = new Collider();
             Vector<Triangle> triangles = new Vector<>();
             Vector3f eye = new Vector3f(0, 100, 0);
@@ -48,16 +44,30 @@ public class App {
             boolean sKeyDown = false;
             boolean lKeyDown = false;
             boolean mKeyDown = false;
-            boolean iKeyDown = false;
+            boolean tKeyDown = false;
+            boolean aKeyDown = false;
             boolean sync = true;
             boolean linear = true;
+            float ao = 0.5f;
             Font font = game.getAssets().load(IO.file("assets/pics/font.fnt"));
             Matrix4f projection = new Matrix4f();
             Matrix4f view = new Matrix4f();
             Sound sound = game.getAssets().load(IO.file("assets/sounds/ambient.wav"));
-            int iters = 1;
 
             for(MeshPart part : mesh) {
+                DualTextureMaterial material = (DualTextureMaterial)part.material;
+  
+                material.color.set(2, 2, 2, 1);
+                for(int i = 0; i != part.getFaceCount(); i++) {
+                    Surface surface = new Surface();
+                    
+                    if(material.texture == null) {
+                        surface.color.set(10, 12, 14);
+                        surface.emitsLight = true;
+                        material.emitsLight = true;
+                    }
+                    part.setFaceData(i, surface);
+                }
                 for(int i = 0; i != part.getTriangleCount(); i++) {
                     Triangle triangle = new Triangle();
 
@@ -69,7 +79,7 @@ public class App {
 
             File file = IO.file("assets/lightmaps/demo1.png");
 
-            map(file, game, iters, linear, renderer);
+            map(file, game, mesh, ao, linear);
 
             game.enableFPSMouse();
 
@@ -85,7 +95,7 @@ public class App {
                 
                 info += "\nRES = " + Resource.getInstances();
                 info += "\nCOL = " + collider.getTested();
-                info += "\nSPC = FS\nI   = Iters " + iters + "\nM   = Map\nL   = Linear\nS   = Sync\nESC = Quit";
+                info += "\nSPC = FS\nM   = Map\nT   = Texture\nA   = AO\nL   = Linear\nS   = Sync\nESC = Quit";
 
                 sound.setVolume(1 - Math.min(eye.distance(400, 150, 0) / 300, 1));
 
@@ -169,21 +179,40 @@ public class App {
                         file.delete();
                         mKeyDown = true;
                         game.getAssets().unload(file);
-                        map(file, game, iters, linear, renderer);
+                        map(file, game, mesh, ao, linear);
                     }
                 } else {
                     mKeyDown = false;
                 }
-                if(game.isKeyDown(GLFW.GLFW_KEY_I)) {
-                    if(!iKeyDown) {
-                        iKeyDown = true;
-                        iters++;
-                        if(iters == 4) {
-                            iters = 1;
+                if(game.isKeyDown(GLFW.GLFW_KEY_T)) {
+                    if(!tKeyDown) {
+                        tKeyDown = true;
+                        for(MeshPart part : mesh) {
+                            DualTextureMaterial material = (DualTextureMaterial)part.material;
+
+                            if(part.data != null) {
+                                material.texture = (Texture)part.data;
+                                part.data = null;
+                            } else {
+                                part.data = material.texture;
+                                material.texture = null;
+                            }
                         }
                     }
                 } else {
-                    iKeyDown = false;
+                    tKeyDown = false;
+                }
+                if(game.isKeyDown(GLFW.GLFW_KEY_A)) {
+                    if(!aKeyDown) {
+                        aKeyDown = true;
+                        if(ao < 0.6f) {
+                            ao = 1;
+                        } else {
+                            ao = 0.5f;
+                        }
+                    }
+                } else {
+                    aKeyDown = false;
                 }
             }
         } finally {
@@ -193,19 +222,18 @@ public class App {
         }
     }
 
-    private static void map(File file, Game game, int iters, boolean linear, DualTextureRenderer renderer) throws Exception {
+    private static void map(File file, Game game, Mesh mesh, float ao, boolean linear) throws Exception {
         DualTextureMaterial material;
-        Mesh mesh = renderer.getMesh();
 
         for(MeshPart part : mesh) {
             material = (DualTextureMaterial)part.material;
-            if(material.texture == null) {
-                material.emissiveColorEnabled = true;
-                material.emissiveColor.set(4, 5, 6, 1);
+
+            if(part.data != null) {
+                material.texture = (Texture)part.data;
             }
         }
 
-        if(new LightMapper().map(file, 128, 128, 128, iters, renderer)) {
+        if(new LightMapper().map(file, IO.file("assets/meshes/samples.obj"), 128, 128, 2, ao, mesh)) {
             Texture texture = game.getAssets().load(file);
 
             if(linear) {
@@ -217,13 +245,20 @@ public class App {
             for(MeshPart part : mesh) {
                 material = (DualTextureMaterial)part.material;
                 material.texture2 = texture;
-                material.emissiveColor.set(1, 1, 1, 1);
             }
         } else {
             Log.log(0, "failed to allocate light map");
             for(MeshPart part : mesh) {
                 material = (DualTextureMaterial)part.material;
                 material.texture2 = null;
+            }
+        }
+
+        for(MeshPart part : mesh) {
+            material = (DualTextureMaterial)part.material;
+
+            if(part.data != null) {
+                material.texture = null;
             }
         }
     }

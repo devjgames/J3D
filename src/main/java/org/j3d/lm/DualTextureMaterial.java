@@ -1,10 +1,17 @@
 package org.j3d.lm;
 
+import java.io.File;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import org.j3d.AssetManager;
 import org.j3d.IO;
 import org.j3d.Material;
+import org.j3d.Mesh;
+import org.j3d.MeshData;
+import org.j3d.MeshDataPart;
+import org.j3d.MeshDataVertex;
+import org.j3d.MeshPart;
 import org.j3d.Pipeline;
 import org.j3d.Resource;
 import org.j3d.Texture;
@@ -20,8 +27,7 @@ public class DualTextureMaterial extends Resource implements Material {
     public Texture texture = null;
     public Texture texture2 = null;
     public final Vector4f color = new Vector4f(1, 1, 1, 1);
-    public final Vector4f emissiveColor = new Vector4f(1, 1, 1, 1);
-    public boolean emissiveColorEnabled = false;
+    public boolean emitsLight = false;
 
     private Pipeline pipeline;
     private int vao, vbo, veo;
@@ -29,8 +35,6 @@ public class DualTextureMaterial extends Resource implements Material {
     private int uTexture, uTextureEnabled;
     private int uTexture2, uTexture2Enabled;
     private int uColor;
-    private int uEmissiveColor;
-    private int uEmissiveColorEnabled;
 
     public DualTextureMaterial() throws Exception {
         pipeline = new Pipeline(
@@ -50,8 +54,6 @@ public class DualTextureMaterial extends Resource implements Material {
         uTexture2 = pipeline.getUniformLocation("uTexture2");
         uTexture2Enabled = pipeline.getUniformLocation("uTexture2Enabled");
         uColor = pipeline.getUniformLocation("uColor");
-        uEmissiveColor = pipeline.getUniformLocation("uEmissiveColor");
-        uEmissiveColorEnabled = pipeline.getUniformLocation("uEmissiveColorEnabled");
     }
 
     @Override
@@ -87,13 +89,11 @@ public class DualTextureMaterial extends Resource implements Material {
         if(texture != null) {
             pipeline.set(uTexture, 0, texture);
         }
-        pipeline.set(uTexture2Enabled, texture2 != null && !emissiveColorEnabled);
-        if(texture2 != null && !emissiveColorEnabled) {
+        pipeline.set(uTexture2Enabled, texture2 != null);
+        if(texture2 != null) {
             pipeline.set(uTexture2, 1, texture2);
         }
         pipeline.set(uColor, color);
-        pipeline.set(uEmissiveColor, emissiveColor);
-        pipeline.set(uEmissiveColorEnabled, emissiveColorEnabled);
         GL15.glDrawElements(GL11.GL_TRIANGLES, indexCount, GL11.GL_UNSIGNED_INT, 0);
         pipeline.end();
         GL30.glBindVertexArray(0);
@@ -108,5 +108,36 @@ public class DualTextureMaterial extends Resource implements Material {
         GL15.glDeleteBuffers(vbo);
         GL15.glDeleteBuffers(veo);
         super.destroy();
+    }
+
+    public static Mesh load(File file, AssetManager assets) throws Exception {
+        Mesh mesh = new Mesh();
+        MeshData data = new MeshData(file);
+
+        for(MeshDataPart dataPart : data.parts) {
+            MeshPart part = new MeshPart(mesh, 7);
+            DualTextureMaterial material = assets.getResources().manage(new DualTextureMaterial());
+
+            if(dataPart.texture != null) {
+                material.texture = assets.load(dataPart.texture);
+            }
+            for(MeshDataVertex vertex : dataPart.vertices) {
+                part.push(vertex.position.x, vertex.position.y, vertex.position.z);
+                part.push(vertex.textureCoordinate.x, vertex.textureCoordinate.y);
+                part.push(0, 0);
+            }
+            for(int[] face : dataPart.faces) {
+                part.pushFace(face);
+            }
+            part.material = material;
+            part.trim();
+            part.bufferVertices(false);
+            part.bufferIndices();
+            part.calcBounds();
+            mesh.addMeshPart(part);
+        }
+        mesh.calcBounds();
+
+        return mesh;
     }
 }

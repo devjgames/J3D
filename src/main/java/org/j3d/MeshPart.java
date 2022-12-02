@@ -19,6 +19,7 @@ public class MeshPart {
     private FloatBuffer vBuf;
     private IntBuffer iBuf = BufferUtils.createIntBuffer(900);
     private final Vector<int[]> faces = new Vector<>();
+    private final Vector<Object> faceData = new Vector<>();
     private int vertexCount = 0;
     private final Matrix4f matrix = new Matrix4f();
     private final BoundingBox objBounds = new BoundingBox();
@@ -58,11 +59,20 @@ public class MeshPart {
         return faces.get(i)[j];
     }
 
+    public void setFaceData(int i, Object data) {
+        faceData.set(i, data);
+    }
+
+    public Object faceDataAt(int i) {
+        return faceData.get(i);
+    }
+
     public void pushFace(int ...indices) {
         int tris = indices.length - 2;
 
         iBuf = Utils.ensureCapacity(iBuf, tris * 3 + 3000);
         faces.add(indices.clone());
+        faceData.add(0);
 
         for(int i = 0; i != tris; i++) {
             iBuf.put(indices[0]);
