@@ -8,7 +8,6 @@ import org.j3d.Game;
 import org.j3d.IO;
 import org.j3d.Mesh;
 import org.j3d.MeshPart;
-import org.j3d.OctTree;
 import org.j3d.PixelLightMaterial;
 import org.j3d.Resource;
 import org.j3d.Triangle;
@@ -65,8 +64,8 @@ public class App {
                     part.triangleAt(i, triangle);
                     triangles.add(triangle);
                 }
+                collider.addTriangleSelector(part);
             }
-            collider.addTriangleSelector(new OctTree.Selector(OctTree.create(triangles,16)));
             collider.radius = 20;
 
             GLFW.glfwSwapInterval(1);

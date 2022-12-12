@@ -10,16 +10,12 @@ import java.awt.image.BufferedImage;
 
 import org.j3d.Log;
 import org.j3d.Mesh;
-import org.j3d.MeshData;
-import org.j3d.MeshDataVertex;
 import org.j3d.MeshPart;
-import org.j3d.OctTree;
 import org.j3d.PixelFormat;
 import org.j3d.Texture;
 import org.j3d.Triangle;
 import org.joml.GeometryUtils;
 import org.joml.Intersectionf;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
@@ -30,10 +26,14 @@ public class LightMapper {
     private final Vector3f v = new Vector3f();
     private final Vector3f origin = new Vector3f();
     private final Vector3f direction = new Vector3f();
+    private final Vector3f offset = new Vector3f();
+    private final Vector3f lightNormal = new Vector3f();
+    private final Vector3f position = new Vector3f();
     private final Vector3f color = new Vector3f();
+    private final Vector3f color2 = new Vector3f();
     private final float[] time = new float[1];
     
-    public boolean map(File file, File sampleFile, int width, int height, int blurPasses, float ambientFactor, Mesh mesh) throws Exception {
+    public boolean map(File file, Vector<Light> lights, int width, int height, float ambientFactor, Mesh mesh) throws Exception {
         int px = 0;
         int py = 0;
         int mh = 0;
@@ -43,19 +43,17 @@ public class LightMapper {
         Vector<int[]> rects = null;
         Texture texture = null;
         ByteBuffer buf =  null;
-        MeshData samples = null;
 
         if(!file.exists()) {
             buf = BufferUtils.createByteBuffer(width * height * 4);
             for(int i = 0; i != buf.capacity(); i += 4) {
                 buf.put((byte)255);
-                buf.put((byte)255);
+                buf.put((byte)0);
                 buf.put((byte)255);
                 buf.put((byte)255);
             }
             buf.flip();
             texture = new Texture(null, width, height, PixelFormat.COLOR, buf);
-            samples = new MeshData(sampleFile);
             rects = new Vector<int[]>();
             texels = new Vector<>(width * height);
         }
@@ -97,53 +95,11 @@ public class LightMapper {
                 ny /= nl;
                 nz /= nl;
 
-                boolean calc = part.getFaceVertexCount(i) == 4;
-
-                if(calc) {
-                    calc = false;
-                    for(int j = 0; j != 4; j++) {
-                        int e1 = part.faceVertexAt(i, j);
-                        int e2 = part.faceVertexAt(i, (j + 1) % 4);
-                        int e3 = part.faceVertexAt(i, (j + 2) % 4);
-                        float ex1 = part.vertexAt(e1, 0);
-                        float ey1 = part.vertexAt(e1, 1);
-                        float ez1 = part.vertexAt(e1, 2);
-                        float ex2 = part.vertexAt(e2, 0);
-                        float ey2 = part.vertexAt(e2, 1);
-                        float ez2 = part.vertexAt(e2, 2);
-                        float ex3 = part.vertexAt(e3, 0);
-                        float ey3 = part.vertexAt(e3, 1);
-                        float ez3 = part.vertexAt(e3, 2);
-
-                        ex1 = ex1 - ex2;
-                        ey1 = ey1 - ey2;
-                        ez1 = ez1 - ez2;
-                        ex2 = ex2 - ex3;
-                        ey2 = ey2 - ey3;
-                        ez2 = ez2 - ez3;
-
-                        float el1 = Vector3f.length(ex1, ey1, ez1);
-                        float el2 = Vector3f.length(ex2, ey2, ez2);
-
-                        ex1 /= el1;
-                        ey1 /= el1;
-                        ez1 /= el1;
-                        ex2 /= el2;
-                        ey2 /= el2;
-                        ez2 /= el2;
-
-                        float angle = (float)(Math.acos(Math.max(-0.99f, Math.min(0.99f, ex1 * ex2 + ey1 * ey2 + ez1 * ez2))) * 180 / Math.PI);
-
-                        if(Math.abs(angle - 90) > 1) {
-                            calc = true;
-                            break;
-                        }
-                    }
-                }
+                boolean four = part.getFaceVertexCount(i) == 4;
 
                 int minX = 0, minY = 0;
 
-                if(calc) {
+                if(four) {
                     w = (int)Math.ceil(ul / 16) + 1;
                     h = (int)Math.ceil(vl / 16) + 1;
                 } else {
@@ -211,7 +167,7 @@ public class LightMapper {
                     mh = Math.max(mh, h);
                 }
 
-                if(calc) {
+                if(four) {
                     int v4 = part.faceVertexAt(i, 3);
 
                     part.setVertexAt(v1, 5, (px + 0.5f) / (float)width);
@@ -262,23 +218,18 @@ public class LightMapper {
 
         int zero = 0;
         int irect = 0;
-        int samplesTested = 0;
-        Vector<Triangle> triangles =new Vector<>();
+        Vector<Triangle> triangles = new Vector<>();
 
         for(MeshPart part : mesh) {
-            for(int i = 0; i != part.getFaceCount(); i++) {
+            for(int i = 0; i != part.getTriangleCount(); i++) {
                 Triangle triangle = new Triangle();
 
                 part.triangleAt(i, triangle);
-                triangle.data = part.faceDataAt(i);
                 triangles.add(triangle);
             }
         }
 
-        OctTree tree = OctTree.create(triangles, 16);
-
         for(MeshPart part : mesh) {
-            DualTextureMaterial material = (DualTextureMaterial)part.material;
 
             for(int i = 0; i != part.getFaceCount(); i++) {
                 int v1 = part.faceVertexAt(i, 0);
@@ -313,6 +264,7 @@ public class LightMapper {
                 float ul = Vector3f.length(ux, uy, uz);
                 float vl = Vector3f.length(vx, vy, vz);
                 float nl = Vector3f.length(nx, ny, nz);
+                Surface surface = (Surface)part.faceDataAt(i);
 
                 px = rect[0];
                 py = rect[1];
@@ -337,7 +289,6 @@ public class LightMapper {
 
                 for(int tx = px; tx != px + w; tx++) {
                     for(int ty = py; ty != py + h; ty++) {
-                        int pix = ty * width * 4 + tx * 4;
                         float s = (tx + 0.5f) / (float)width;
                         float t = (ty + 0.5f) / (float)height;
                         float w0 = (s - t2x) * (t3y - t2y) - (t - t2y) * (t3x - t2x);
@@ -358,130 +309,101 @@ public class LightMapper {
                         texel.position.set(ex, ey, ez);
                         texel.normal.set(nx, ny, nz);
 
-                        if(material.emitsLight) {
-                            Vector3f lightColor = ((Surface)part.faceDataAt(i)).color;
-                            byte r = (byte)((int)(lightColor.x * 255) & 0xFF);
-                            byte g = (byte)((int)(lightColor.y * 255) & 0xFF);
-                            byte b = (byte)((int)(lightColor.z * 255) & 0xFF);
-                            float max = Math.max(lightColor.x, Math.max(lightColor.y, lightColor.z));
+                        boolean edge = false;
 
-                            buf.put(pix++, r);
-                            buf.put(pix++, g);
-                            buf.put(pix, b);
-                            texel.color.set(lightColor);
-                            texel.emitsLight = true;
+                        edgeNormal.zero();
 
-                            if(max > 1) {
-                                texel.color.div(max);
-                            }
-                        } else {
-                            boolean edge = false;
-
-                            edgeNormal.zero();
-
-                            for(MeshPart p : mesh) {
-                                for(int k = 0; k != p.getFaceCount(); k++) {
-                                    if(p == part) {
-                                        if(k == i) {
-                                            continue;
+                        for(MeshPart p : mesh) {
+                            for(int k = 0; k != p.getFaceCount(); k++) {
+                                if(p == part) {
+                                    if(k == i) {
+                                        continue;
+                                    }
+                                }
+                
+                                float kx1 = p.vertexAt(p.faceVertexAt(k, 0), 0);
+                                float ky1 = p.vertexAt(p.faceVertexAt(k, 0), 1);
+                                float kz1 = p.vertexAt(p.faceVertexAt(k, 0), 2);
+                                float kx2 = p.vertexAt(p.faceVertexAt(k, 1), 0);
+                                float ky2 = p.vertexAt(p.faceVertexAt(k, 1), 1);
+                                float kz2 = p.vertexAt(p.faceVertexAt(k, 1), 2);
+                                float kx3 = p.vertexAt(p.faceVertexAt(k, 2), 0);
+                                float ky3 = p.vertexAt(p.faceVertexAt(k, 2), 1);
+                                float kz3 = p.vertexAt(p.faceVertexAt(k, 2), 2);
+                
+                                GeometryUtils.normal(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, normal);
+                
+                                for(int m = 0; m != p.getFaceVertexCount(k); m++) {
+                                    int mv1 = p.faceVertexAt(k, m);
+                                    int mv2 = p.faceVertexAt(k, (m + 1) % p.getFaceVertexCount(k));
+                                    float mx1 = p.vertexAt(mv1, 0);
+                                    float my1 = p.vertexAt(mv1, 1);
+                                    float mz1 = p.vertexAt(mv1, 2);
+                                    float mx2 = p.vertexAt(mv2, 0);
+                                    float my2 = p.vertexAt(mv2, 1);
+                                    float mz2 = p.vertexAt(mv2, 2);
+                                    
+                                    Intersectionf.findClosestPointOnLineSegment(mx1, my1, mz1, mx2, my2, mz2, ex, ey, ez, this.v);
+                
+                                    if(this.v.distance(ex, ey, ez) < 8) {
+                                        if(normal.dot(nx, ny, nz) < 0.4f) {
+                                            edgeNormal.add(normal);
+                                            edge = true;
                                         }
                                     }
-                    
-                                    float kx1 = p.vertexAt(p.faceVertexAt(k, 0), 0);
-                                    float ky1 = p.vertexAt(p.faceVertexAt(k, 0), 1);
-                                    float kz1 = p.vertexAt(p.faceVertexAt(k, 0), 2);
-                                    float kx2 = p.vertexAt(p.faceVertexAt(k, 1), 0);
-                                    float ky2 = p.vertexAt(p.faceVertexAt(k, 1), 1);
-                                    float kz2 = p.vertexAt(p.faceVertexAt(k, 1), 2);
-                                    float kx3 = p.vertexAt(p.faceVertexAt(k, 2), 0);
-                                    float ky3 = p.vertexAt(p.faceVertexAt(k, 2), 1);
-                                    float kz3 = p.vertexAt(p.faceVertexAt(k, 2), 2);
-                    
-                                    GeometryUtils.normal(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, normal);
-                    
-                                    for(int m = 0; m != p.getFaceVertexCount(k); m++) {
-                                        int mv1 = p.faceVertexAt(k, m);
-                                        int mv2 = p.faceVertexAt(k, (m + 1) % p.getFaceVertexCount(k));
-                                        float mx1 = p.vertexAt(mv1, 0);
-                                        float my1 = p.vertexAt(mv1, 1);
-                                        float mz1 = p.vertexAt(mv1, 2);
-                                        float mx2 = p.vertexAt(mv2, 0);
-                                        float my2 = p.vertexAt(mv2, 1);
-                                        float mz2 = p.vertexAt(mv2, 2);
-                                        
-                                        Intersectionf.findClosestPointOnLineSegment(mx1, my1, mz1, mx2, my2, mz2, ex, ey, ez, this.v);
-                    
-                                        if(this.v.distance(ex, ey, ez) < 8) {
-                                            if(normal.dot(nx, ny, nz) < 0.4f) {
-                                                edgeNormal.set(normal);
-                                                edge = true;
+                                }
+                            }
+                        }
+
+                        if(edge) {
+                            edgeNormal.normalize().mul(8);
+                            zero++;
+                        }
+                        texel.edge = edge;
+
+                        if(surface.emitsLight) {
+                            color.set(1, 1, 1);
+                        } else {
+                            position.set(ex, ey, ez);
+                            normal.set(nx, ny, nz);
+                            color.set(surface.ambientColor);
+
+                            for(Light light : lights) {
+                                light.position.sub(position, offset);
+                                offset.normalize(lightNormal);
+
+                                float dI = Math.max(0, Math.min(1, lightNormal.dot(normal)));
+                                float atten = 1 - Math.min(1, offset.length() / light.radius);
+                                float shadow = 1;
+
+                                for(int xs = -4; xs != 5; xs++) {
+                                    for(int ys = -4; ys != 5; ys++) {
+                                        origin.set(position).add(normal).add(edgeNormal).add(ux * xs * 4 + vx * ys * 4, uy * xs * 4 + vy * ys * 4, uz * xs * 4 + vz * ys * 4);
+                                        light.position.sub(origin, direction);
+                                        time[0] = direction.length();
+                                        direction.normalize();
+                                        for(Triangle triangle : triangles) {
+                                            if(triangle.intersects(origin, direction, 0, time)) {
+                                                shadow -= 1 / (9.0f * 9.0f);
                                                 break;
                                             }
                                         }
                                     }
-                                    if(edge) {
-                                        break;
-                                    }
                                 }
-                                if(edge) {
-                                    break;
-                                }
+                                color2.set(surface.diffuseColor).mul(light.color).mul(atten * dI * shadow);
+                                color.add(color2);
                             }
-
-                            if(edge) {
-                                edgeNormal.mul(8);
-                                zero++;
-                            }
-                            texel.edge = edge;
-
-                            int count = 0;
-
-                            origin.set(ex, ey, ez).add(edgeNormal).add(normal.set(nx, ny, nz));
-                            color.zero();
-
-                            for(MeshDataVertex sample : samples.parts.get(0).vertices) {
-                                float d = direction.set(sample.normal).dot(normal);
-
-                                if(d > 0.1f) {
-                                    Triangle triangle;
-
-                                    time[0] = Float.MAX_VALUE;
-                                    if((triangle = intersect(tree)) != null) {
-                                        Surface surface = (Surface)triangle.data;
-                                        float atten = (d - 0.1f) / 0.9f;
-
-                                        if(surface.emitsLight) {
-                                            atten *= 1 - Math.min(1, time[0] / surface.lightRadius);
-                                        }
-
-                                        float r = surface.color.x * atten;
-                                        float g = surface.color.y * atten;
-                                        Float b = surface.color.z * atten;
-
-                                        color.add(r, g, b);
-                                        count++;
-                                    }
-                                }
-                            }
-                            samplesTested = count;
-
-                            color.div(count);
-
-                            float max = Math.max(color.x, Math.max(color.y, color.z));
-
-                            if(max > 1) {
-                                color.div(max);
-                            }
-                            texel.color.set(color);
-
-                            byte r = (byte)((int)(color.x * 255) & 0xFF);
-                            byte g = (byte)((int)(color.y * 255) & 0xFF);
-                            byte b = (byte)((int)(color.z * 255) & 0xFF);
-
-                            buf.put(pix++, r);
-                            buf.put(pix++, g);
-                            buf.put(pix, b);
                         }
+
+                        float max = Math.max(color.x, Math.max(color.y, color.z));
+
+                        if(max > 1) {
+                            color.div(max);
+                        }
+     
+                        texel.color.set(color);
+                        texel.emitsLight = surface.emitsLight;
+
                         texels.add(texel);
                     }
                 }
@@ -489,77 +411,22 @@ public class LightMapper {
                 px += w;
             }
         }
-        Log.log(1, "edge texels = " + zero + ", samples tested = " + samplesTested);
-
-        float radius = Vector2f.length(16, 16) + 0.01f;
+        Log.log(1, "edge texels = " + zero);
 
         for(Texel texel : texels) {
-            int i = 0;
-            for(Texel texel2 : texels) {
-                if(texel != texel2) {
-                    if(texel.normal.dot(texel2.normal) > 0.9) {
-                        if(texel.position.distance(texel2.position) <= radius) {
-                            texel.adjacent.add(i);
-                        }
-                    }
-                }
-                i++;
-            }
-        }
+            int i = texel.y * width * 4 + texel.x * 4;
 
-        Vector<Texel> newTexels = new Vector<>(texels.size());
+            if(texel.edge && !texel.emitsLight) {
+                texel.color.mul(ambientFactor);
+            } 
 
-        for(int i = 0; i < blurPasses; i++) {
-            for(Texel texel : texels) {
-                Texel newTexel = new Texel();
+            byte r = (byte)((int)(texel.color.x * 255) & 0xFF);
+            byte g = (byte)((int)(texel.color.y * 255) & 0xFF);
+            byte b = (byte)((int)(texel.color.z * 255) & 0xFF);
 
-                newTexel.color.set(texel.color);
-                newTexel.x = texel.x;
-                newTexel.y = texel.y;
-                newTexel.emitsLight = texel.emitsLight;
-                newTexel.edge = texel.edge;
-                newTexel.position.set(texel.position);
-                newTexel.normal.set(texel.normal);
-                newTexel.adjacent.addAll(texel.adjacent);
-                if(!texel.emitsLight) {
-                    int count = 1;
-
-                    for(Integer j : texel.adjacent) {
-                        Texel texel2 = texels.get(j);
-
-                        if(!texel2.emitsLight) {
-                            Vector3f c = texel2.color;
-
-                            newTexel.color.add(c);
-                            count++;
-                        }
-                    }
-                    newTexel.color.div(count);
-                }
-                newTexels.add(newTexel);
-            }
-            Vector<Texel> temp = texels;
-
-            texels = newTexels;
-            newTexels = temp;
-        }
-
-        for(Texel texel : texels) {
-            if(!texel.emitsLight) {
-                int i = texel.y * width * 4 + texel.x * 4;
-
-                if(texel.edge) {
-                    texel.color.mul(ambientFactor);
-                } 
-
-                byte r = (byte)((int)(texel.color.x * 255) & 0xFF);
-                byte g = (byte)((int)(texel.color.y * 255) & 0xFF);
-                byte b = (byte)((int)(texel.color.z * 255) & 0xFF);
-
-                buf.put(i++, r);
-                buf.put(i++, g);
-                buf.put(i, b);
-            }
+            buf.put(i++, r);
+            buf.put(i++, g);
+            buf.put(i, b);
         }
 
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -582,30 +449,5 @@ public class LightMapper {
         texture.destroy();
 
         return true;
-    }
-
-    private Triangle intersect(OctTree tree) {
-        float t = time[0];
-        Triangle hit = null;
-
-        time[0] = Float.MAX_VALUE;
-        if(tree.getBounds().intersects(origin, direction, time)) {
-            time[0] = t;
-            for(Triangle triangle : tree.getTriangles()) {
-                if(triangle.intersects(origin, direction, 0, time)) {
-                    hit = triangle;
-                }
-            }
-            for(OctTree child : tree.getChildren()) {
-                Triangle r = intersect(child);
-
-                if(r != null) {
-                    hit = r;
-                }
-            }
-        } else {
-            time[0] = t;
-        }
-        return hit;
     }
 }

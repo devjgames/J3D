@@ -4,10 +4,11 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Vector;
 
+import org.j3d.Collider.TriangleSelector;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
-public class MeshPart {
+public class MeshPart implements TriangleSelector {
     
     public final int stride;
     public Material material = null;
@@ -23,6 +24,8 @@ public class MeshPart {
     private int vertexCount = 0;
     private final Matrix4f matrix = new Matrix4f();
     private final BoundingBox objBounds = new BoundingBox();
+    private boolean enabled = true;
+    private final Triangle triangle = new Triangle();
 
     public MeshPart(Mesh mesh, int stride) {
         this.stride = stride;
@@ -161,5 +164,45 @@ public class MeshPart {
         if(material != null) {
             material.render(projection, view, matrix.set(mesh.model).mul(model), getIndexCount());
         }
+    }
+
+    @Override
+    public boolean getEnabled() {
+        return enabled;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    @Override
+    public boolean intersect(Collider collider) {
+        boolean hit = false;
+
+        for(int i = 0; i != getTriangleCount(); i++) {
+            triangleAt(i, triangle);
+            triangle.transform(matrix.set(mesh.model).mul(model));
+            if(collider.selectorIntersect(triangle)) {
+                hit = true;
+            }
+        }
+        return hit;
+    }
+
+    @Override
+    public boolean resolve(Collider collider) {
+        boolean hit = false;
+
+        if(collider.resolveBounds.touches(bounds)) {
+            for(int i = 0; i != getTriangleCount(); i++) {
+                triangleAt(i, triangle);
+                triangle.transform(matrix.set(mesh.model).mul(model));
+                if(collider.selectorResolve(triangle)) {
+                    hit = true;
+                }
+            }
+        }
+        return hit;
     }
 }

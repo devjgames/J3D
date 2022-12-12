@@ -1,7 +1,7 @@
 # Blender 3.3.1 MTL File: 'meshes.blend'
 # www.blender.org
 
-newmtl Tile1
+newmtl Stone1.001
 Ns 360.000000
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
@@ -11,8 +11,8 @@ d 1.000000
 illum 2
 map_Kd tile1.png
 
-newmtl White1
-Ns 360.000000
+newmtl White2
+Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000

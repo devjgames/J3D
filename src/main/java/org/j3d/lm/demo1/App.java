@@ -10,13 +10,13 @@ import org.j3d.IO;
 import org.j3d.Log;
 import org.j3d.Mesh;
 import org.j3d.MeshPart;
-import org.j3d.OctTree;
 import org.j3d.Resource;
 import org.j3d.Sound;
 import org.j3d.Texture;
 import org.j3d.Triangle;
 import org.j3d.Utils;
 import org.j3d.lm.DualTextureMaterial;
+import org.j3d.lm.Light;
 import org.j3d.lm.LightMapper;
 import org.j3d.lm.Surface;
 import org.joml.Matrix4f;
@@ -53,6 +53,8 @@ public class App {
             Matrix4f projection = new Matrix4f();
             Matrix4f view = new Matrix4f();
             Sound sound = game.getAssets().load(IO.file("assets/sounds/ambient.wav"));
+            Vector<Light> lights = new Vector<>();
+            Vector3f center = new Vector3f();
 
             for(MeshPart part : mesh) {
                 DualTextureMaterial material = (DualTextureMaterial)part.material;
@@ -60,11 +62,53 @@ public class App {
                 material.color.set(2, 2, 2, 1);
                 for(int i = 0; i != part.getFaceCount(); i++) {
                     Surface surface = new Surface();
-                    
+
                     if(material.texture == null) {
-                        surface.color.set(10, 12, 14);
+                        int j = 0;
+
+                        center.zero();
+
+                        for(; j != part.getFaceVertexCount(i); j++) {
+                            float x = part.vertexAt(part.faceVertexAt(i, j), 0);
+                            float y = part.vertexAt(part.faceVertexAt(i, j), 1);
+                            float z = part.vertexAt(part.faceVertexAt(i, j), 2);
+
+                            center.add(x, y, z);
+                        }
+                        center.div(j);
+
+                        Light light = new Light();
+                        float x1 = part.vertexAt(part.faceVertexAt(i, 0), 0);
+                        float y1 = part.vertexAt(part.faceVertexAt(i, 0), 1);
+                        float z1 = part.vertexAt(part.faceVertexAt(i, 0), 2);
+                        float x2 = part.vertexAt(part.faceVertexAt(i, 1), 0);
+                        float y2 = part.vertexAt(part.faceVertexAt(i, 1), 1);
+                        float z2 = part.vertexAt(part.faceVertexAt(i, 1), 2);
+                        float x3 = part.vertexAt(part.faceVertexAt(i, 2), 0);
+                        float y3 = part.vertexAt(part.faceVertexAt(i, 2), 1);
+                        float z3 = part.vertexAt(part.faceVertexAt(i, 2), 2);
+                        float ux = x2 - x1;
+                        Float uy = y2 - y1;
+                        float uz = z2 - z1;
+                        float vx = x3 - x2;
+                        float vy = y3 - y2;
+                        float vz = z3 - z2;
+                        float nx = uy * vz - uz * vy;
+                        float ny = uz * vx - ux * vz;
+                        float nz = ux * vy - uy * vx;
+                        float l = Vector3f.length(nx, ny, nz);
+
+                        nx /= l;
+                        ny /= l;
+                        nz /= l;
+
+                        light.position.set(center).add(nx * 20, ny * 20, nz * 20);
+                        light.color.set(0.75f, 1, 1.25f);
+                        lights.add(light);
+
+                        surface.ambientColor.set(1, 1, 1);
+                        surface.diffuseColor.set(0, 0, 0);
                         surface.emitsLight = true;
-                        material.emitsLight = true;
                     }
                     part.setFaceData(i, surface);
                 }
@@ -74,12 +118,12 @@ public class App {
                     part.triangleAt(i, triangle);
                     triangles.add(triangle);
                 }
+                collider.addTriangleSelector(part);
             }
-            collider.addTriangleSelector(new OctTree.Selector(OctTree.create(triangles,16)));
 
             File file = IO.file("assets/lightmaps/demo1.png");
 
-            map(file, game, mesh, ao, linear);
+            map(file, game, lights, mesh, ao, linear);
 
             game.enableFPSMouse();
 
@@ -179,7 +223,7 @@ public class App {
                         file.delete();
                         mKeyDown = true;
                         game.getAssets().unload(file);
-                        map(file, game, mesh, ao, linear);
+                        map(file, game, lights, mesh, ao, linear);
                     }
                 } else {
                     mKeyDown = false;
@@ -205,7 +249,7 @@ public class App {
                 if(game.isKeyDown(GLFW.GLFW_KEY_A)) {
                     if(!aKeyDown) {
                         aKeyDown = true;
-                        if(ao < 0.6f) {
+                        if(ao < 0.8f) {
                             ao = 1;
                         } else {
                             ao = 0.5f;
@@ -222,7 +266,7 @@ public class App {
         }
     }
 
-    private static void map(File file, Game game, Mesh mesh, float ao, boolean linear) throws Exception {
+    private static void map(File file, Game game, Vector<Light> lights,  Mesh mesh, float ao, boolean linear) throws Exception {
         DualTextureMaterial material;
 
         for(MeshPart part : mesh) {
@@ -233,7 +277,7 @@ public class App {
             }
         }
 
-        if(new LightMapper().map(file, IO.file("assets/meshes/samples.obj"), 128, 128, 2, ao, mesh)) {
+        if(new LightMapper().map(file, lights, 128, 128, ao, mesh)) {
             Texture texture = game.getAssets().load(file);
 
             if(linear) {

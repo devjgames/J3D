@@ -27,7 +27,6 @@ public class DualTextureMaterial extends Resource implements Material {
     public Texture texture = null;
     public Texture texture2 = null;
     public final Vector4f color = new Vector4f(1, 1, 1, 1);
-    public boolean emitsLight = false;
 
     private Pipeline pipeline;
     private int vao, vbo, veo;
