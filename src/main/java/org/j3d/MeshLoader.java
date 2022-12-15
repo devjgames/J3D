@@ -26,7 +26,7 @@ public class MeshLoader implements AssetLoader {
                 part.pushFace(face);
             }
             part.trim();
-            part.bufferIndices();;
+            part.bufferIndices();
             part.bufferVertices(false);
             part.calcBounds();
             mesh.addMeshPart(part);

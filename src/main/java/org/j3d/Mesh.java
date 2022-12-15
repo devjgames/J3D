@@ -35,7 +35,12 @@ public class Mesh implements Iterable<MeshPart> {
 
     public void render(Matrix4f projection, Matrix4f view) {
         for(MeshPart part : this) {
+            part.begin(null);
             part.render(projection, view);
+            part.end();
+        }
+        if(getMeshPartCount() != 0) {
+            meshPartAt(getMeshPartCount() - 1).material.end();
         }
     }
 
@@ -48,7 +53,7 @@ public class Mesh implements Iterable<MeshPart> {
         Mesh mesh = new Mesh();
 
         for(MeshPart part : this) {
-            mesh.addMeshPart(part);
+            mesh.addMeshPart(part.newInstance(mesh));
         }
         mesh.calcBounds();
         

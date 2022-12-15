@@ -34,6 +34,7 @@ public class DualTextureMaterial extends Resource implements Material {
     private int uTexture, uTextureEnabled;
     private int uTexture2, uTexture2Enabled;
     private int uColor;
+    private MeshPart source = null;
 
     public DualTextureMaterial() throws Exception {
         pipeline = new Pipeline(
@@ -56,6 +57,11 @@ public class DualTextureMaterial extends Resource implements Material {
     }
 
     @Override
+    public void setSource(Object source) {
+        this.source = (MeshPart)source;
+    }
+
+    @Override
     public void buffer(FloatBuffer vBuf, boolean dynamic) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vBuf, (dynamic) ? GL15.GL_DYNAMIC_DRAW : GL15.GL_STATIC_DRAW);
@@ -70,8 +76,21 @@ public class DualTextureMaterial extends Resource implements Material {
     }
 
     @Override
-    public void render(Matrix4f projection, Matrix4f view, Matrix4f model, int indexCount) {
+    public void begin(Object data) {
         pipeline.begin();
+        pipeline.set(uTextureEnabled, texture != null);
+        if(texture != null) {
+            pipeline.set(uTexture, 0, texture);
+        }
+        pipeline.set(uTexture2Enabled, texture2 != null);
+        if(texture2 != null) {
+            pipeline.set(uTexture2, 1, texture2);
+        }
+        pipeline.set(uColor, color);
+    }
+
+    @Override
+    public void render(Matrix4f projection, Matrix4f view, Matrix4f model) {
         GL30.glBindVertexArray(vao);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, veo);
@@ -84,16 +103,12 @@ public class DualTextureMaterial extends Resource implements Material {
         pipeline.set(uProjection, projection);
         pipeline.set(uView, view);
         pipeline.set(uModel, model);
-        pipeline.set(uTextureEnabled, texture != null);
-        if(texture != null) {
-            pipeline.set(uTexture, 0, texture);
-        }
-        pipeline.set(uTexture2Enabled, texture2 != null);
-        if(texture2 != null) {
-            pipeline.set(uTexture2, 1, texture2);
-        }
-        pipeline.set(uColor, color);
-        GL15.glDrawElements(GL11.GL_TRIANGLES, indexCount, GL11.GL_UNSIGNED_INT, 0);
+        GL15.glDrawElements(GL11.GL_TRIANGLES, source.getIndexCount(), GL11.GL_UNSIGNED_INT, 0);
+
+    }
+
+    @Override
+    public void end() {
         pipeline.end();
         GL30.glBindVertexArray(0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
@@ -107,6 +122,16 @@ public class DualTextureMaterial extends Resource implements Material {
         GL15.glDeleteBuffers(vbo);
         GL15.glDeleteBuffers(veo);
         super.destroy();
+    }
+
+    @Override
+    public boolean isEqualTo(Material material) {
+        if(material instanceof DualTextureMaterial) {
+            if(material == this) {
+                return true;
+            } 
+        } 
+        return false;
     }
 
     public static Mesh load(File file, AssetManager assets) throws Exception {

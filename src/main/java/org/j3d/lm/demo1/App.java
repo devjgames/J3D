@@ -16,8 +16,9 @@ import org.j3d.Texture;
 import org.j3d.Triangle;
 import org.j3d.Utils;
 import org.j3d.lm.DualTextureMaterial;
-import org.j3d.lm.Light;
+import org.j3d.Light;
 import org.j3d.lm.LightMapper;
+import org.j3d.lm.Model;
 import org.j3d.lm.Surface;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -104,6 +105,7 @@ public class App {
 
                         light.position.set(center).add(nx * 20, ny * 20, nz * 20);
                         light.color.set(0.75f, 1, 1.25f);
+                        light.radius = 275;
                         lights.add(light);
 
                         surface.ambientColor.set(1, 1, 1);
@@ -268,6 +270,7 @@ public class App {
 
     private static void map(File file, Game game, Vector<Light> lights,  Mesh mesh, float ao, boolean linear) throws Exception {
         DualTextureMaterial material;
+        Vector<Model> models = new Vector<>();
 
         for(MeshPart part : mesh) {
             material = (DualTextureMaterial)part.material;
@@ -276,8 +279,9 @@ public class App {
                 material.texture = (Texture)part.data;
             }
         }
+        models.add(new Model(mesh.model, mesh));
 
-        if(new LightMapper().map(file, lights, 128, 128, ao, mesh)) {
+        if(new LightMapper().map(file, lights, 128, 128, ao, models)) {
             Texture texture = game.getAssets().load(file);
 
             if(linear) {

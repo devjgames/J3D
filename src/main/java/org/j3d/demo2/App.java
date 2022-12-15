@@ -12,7 +12,7 @@ import org.j3d.PixelLightMaterial;
 import org.j3d.Resource;
 import org.j3d.Triangle;
 import org.j3d.Utils;
-import org.j3d.PixelLightMaterial.Light;
+import org.j3d.Light;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;

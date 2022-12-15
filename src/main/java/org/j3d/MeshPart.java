@@ -10,9 +10,9 @@ import org.lwjgl.BufferUtils;
 
 public class MeshPart implements TriangleSelector {
     
+    public final Mesh mesh;
     public final int stride;
     public Material material = null;
-    public final Mesh mesh;
     public final BoundingBox bounds = new BoundingBox();
     public final Matrix4f model = new Matrix4f();
     public Object data = null;
@@ -32,6 +32,10 @@ public class MeshPart implements TriangleSelector {
         this.mesh = mesh;
 
         vBuf = BufferUtils.createFloatBuffer(300 * stride);
+    }
+
+    public Mesh getMesh() {
+        return mesh;
     }
 
     public int getTriangleCount() {
@@ -160,10 +164,21 @@ public class MeshPart implements TriangleSelector {
         vBuf = Utils.trimCapacity(vBuf);
     }
 
-    public void render(Matrix4f projection, Matrix4f view) {
+    public void begin(Object data) {
+        material.begin(data);
+    }
+
+    public int render(Matrix4f projection, Matrix4f view) {
         if(material != null) {
-            material.render(projection, view, matrix.set(mesh.model).mul(model), getIndexCount());
+            material.setSource(this);
+            material.render(projection, view, matrix.set(mesh.model).mul(model));
+            return 1;
         }
+        return 0;
+    }
+
+    public void end() {
+        material.end();
     }
 
     @Override
@@ -204,5 +219,24 @@ public class MeshPart implements TriangleSelector {
             }
         }
         return hit;
+    }
+
+    public MeshPart newInstance(Mesh mesh) {
+        MeshPart part = new MeshPart(mesh, stride);
+
+        part.material = material;
+
+        for(int i = 0; i != vBuf.capacity(); i++) {
+            part.push(vBuf.get(i));
+        }
+        for(int[] face : faces) {
+            part.pushFace(face);
+        }
+        part.trim();
+        part.bufferIndices();
+        part.bufferVertices(false);
+        part.calcBounds();
+
+        return part;
     }
 }
