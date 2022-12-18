@@ -7,8 +7,12 @@ import java.lang.reflect.Modifier;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.j3d.AssetLoader;
+import org.j3d.AssetManager;
 import org.j3d.Game;
 import org.j3d.IO;
+import org.j3d.Mesh;
+import org.j3d.MeshLoader;
 import org.j3d.Parser;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -18,18 +22,22 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-public class Serializer {
+public class Serializer implements AssetLoader {
     
     public static void serialize(Scene scene, File file) throws Exception {
         StringBuilder b = new StringBuilder(1000);
 
         b.append("<scene");
         appendAttributes(scene, b);
-        for(Node node : scene.root) {
-            appendNode(node, "\t", b);
+        if(scene.root.getCount() == 0) {
+            b.append("/>\n");
+        } else {
+            b.append(">\n");
+            for(Node node : scene.root) {
+                appendNode(node, "\t", b);
+            }
+            b.append("</scene>\n");
         }
-        b.append("/>\n");
-
         IO.writeAllBytes(b.toString().getBytes(), file);
     }
 
@@ -87,7 +95,7 @@ public class Serializer {
     }
 
     private static void appendAttribute(String name, String value, StringBuilder b) {
-        b.append(" " + name + " = \"" + value + "\"");
+        b.append(" " + name + "=\"" + value + "\"");
     }
 
     public static Scene deserialize(File file, Game game, boolean inDesign) throws Exception {
@@ -211,5 +219,10 @@ public class Serializer {
                 }
             }
         }
+    }
+
+    @Override
+    public Object load(File file, AssetManager assets) throws Exception {
+        return new MeshRenderable(file, (Mesh)new MeshLoader().load(file, assets));
     }
 }

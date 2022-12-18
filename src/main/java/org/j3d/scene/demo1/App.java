@@ -3,17 +3,23 @@ package org.j3d.scene.demo1;
 import java.io.File;
 import java.util.Vector;
 
+import org.j3d.BoundingBox;
 import org.j3d.Font;
 import org.j3d.Game;
 import org.j3d.IO;
-import org.j3d.MeshPart;
+import org.j3d.Parser;
 import org.j3d.Resource;
+import org.j3d.Triangle;
 import org.j3d.UIManager;
-import org.j3d.lm.DualTextureMaterial;
-import org.j3d.scene.MeshRenderable;
+import org.j3d.scene.Lines;
+import org.j3d.scene.Node;
 import org.j3d.scene.Renderer;
 import org.j3d.scene.Scene;
-import org.j3d.scene.demo1.Tile.TileSize;
+import org.j3d.scene.Serializer;
+import org.j3d.scene.demo1.factories.Info1;
+import org.j3d.scene.demo1.factories.Light1;
+import org.j3d.scene.demo1.factories.Stone1;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
@@ -22,61 +28,36 @@ public class App {
     private static Game game = null;
     private static Scene scene = null;
     private static UIManager manager;
-    private static Vector<Tile> tiles = new Vector<>();
-    private static Vector<Tile> tileFactories = new Vector<>();
-    private static Vector<String> tileFactoryNames = new Vector<>();
+    private static Vector<NodeFactory> factories = new Vector<>();
+    private static Vector<String> factoryNames = new Vector<>();
     private static Vector<String> sceneList = new Vector<>();
-    private static String[] modes = new String[] { "Zoom", "Rot", "Mov", "+", "-" };
-    private static int mode = 1;
+    private static String[] modes = new String[] { "ZM", "PXZ", "PY", "RT", "SEL", "MXZ", "MY", "RX", "RY", "RZ", "S" };
+    private static int mode = 2;
     private static boolean showScenes = false;
-    private static File tileFile = null;
-    private static Tile tileFactory = null;
-    
+    private static File sceneFile = null;
+    private static NodeFactory factory = null;
+    private static Matrix4f matrix = new Matrix4f();
+    private static Triangle triangle = new Triangle();
+    private static BoundingBox bounds = new BoundingBox();
+    private static int snap = 1;
+    private static boolean resetSnap = true;
+    private static boolean resetComponents = false;
+    private static boolean sync = true;
+    private static boolean resetFactories = false;
+
     public static void main(String[] args) throws Exception {
 
         try {
             game = new Game(1000, 700, true);
+            game.getAssets().registerAssetLoader(".obj", new Serializer());
 
-            tileFactories.add(new Tile.Light(game, null, TileSize.X32, 0, 0, 0));
-            tileFactories.add(new Tile.Floor(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Corner1(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Corner2(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Corner3(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Corner4(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Side1(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Side2(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Side3(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tile.Side4(game, null, TileSize.X128, 0, 0, 0));
-            tileFactories.add(new Tiles2.LightOrange(game, null, TileSize.X32, 0, 0, 0));
-            tileFactories.add(new Tiles2.LightBlue(game, null, TileSize.X32, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeFlatL(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeFlatH(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeCornerL1(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeCornerH1(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeCornerL2(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeCornerH2(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeCornerL3(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeCornerH3(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeCornerL4(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeCornerH4(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeSideL1(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeSideH1(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeSideL2(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeSideH2(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeSideL3(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeSideH3(game, null, TileSize.X64, 0, 0, 1));
-            tileFactories.add(new Tiles2.LedgeSideL4(game, null, TileSize.X64, 0, 0, 0));
-            tileFactories.add(new Tiles2.LedgeSideH4(game, null, TileSize.X64, 0, 0, 1));
-            for(Tile tile : tileFactories) {
-                tileFactoryNames.add(tile.toString());
-            }
-            scene = load(IO.file("assets/tile-scenes/scene1.txt"), game, true);
+            load(IO.file("assets/scenes/scene1.xml"), game, true);
 
-            File[] files = IO.file("assets/tile-scenes").listFiles();
+            File[] files = IO.file("assets/scenes").listFiles();
 
             if(files != null) {
                 for(File sceneFile : files) {
-                    if(sceneFile.isFile() && IO.extension(sceneFile).equals(".txt")) {
+                    if(sceneFile.isFile() && IO.extension(sceneFile).equals(".xml")) {
                         sceneList.add(IO.fileNameWithOutExtension(sceneFile));
                     }
                 }
@@ -86,9 +67,7 @@ public class App {
             manager = new UIManager(game, game.getResources().manage(new Font(IO.file("assets/pics/font.fnt"))));
 
             Renderer renderer = new Renderer();
-            boolean spaceKeyDown = false;
-            boolean sKeyDown = false;
-            boolean sync = true;
+            boolean down = false;
 
             GLFW.glfwSwapInterval(1);
 
@@ -100,90 +79,80 @@ public class App {
                 game.beginRenderTarget();
                 renderer.render(scene, game);
                 if(scene.inDesign) {
-                    pushInfo(game, scene, renderer);
+                    pushInfo(game, scene, renderer, "");
                     handled = handleUI();
                 }
                 game.nextFrame();
 
-                if(!handled) {
+                if(!handled && scene.inDesign) {
                     if(game.isButtonDown(0)) {
                         if(mode == 0) {
                             scene.zoom(game.getDeltaY());
                         } else if(mode == 1) {
-                            scene.rotateAroundTarget(game);
-                        } else if(mode == 2) {
                             scene.move(scene.target, game.getDeltaX(), game.getDeltaY(), null);
-                        } 
-                    }
-                    scene.lines.cellSize = 0;
-                    
-                    if(tileFactory != null && (mode == 3 || mode == 4)) {
-                        Vector3f origin = new Vector3f();
-                        Vector3f direction = new Vector3f();
-                        int h = game.getRenderTargetHeight();
-                        int x = game.getMouseX();
-                        int y = h - game.getMouseY() - 1;
-                        int cs = tileFactory.getCellSize();
+                        } else if(mode == 2) {
+                            scene.move(scene.target, game.getDeltaY(), null);
+                        } else if(mode == 3) {
+                            scene.rotateAroundTarget(game);
+                        } else if(mode == 4) {
+                            if(!down) {
+                                int h = game.getRenderTargetHeight();
+                                int x = game.getMouseX();
+                                int y = h - game.getMouseY() - 1;
+                                Vector3f origin = new Vector3f();
+                                Vector3f direction = new Vector3f();
+                                float[] time = new float[] { Float.MAX_VALUE };
 
-                        scene.unProject(x, y, 0, game, origin);
-                        scene.unProject(x, y, 1, game, direction);
-                        direction.sub(origin).normalize();
+                                scene.unProject(x, y, 0, game, origin);
+                                scene.unProject(x, y, 1, game, direction);
+                                direction.sub(origin).normalize();
 
-                        float t = direction.dot(0, 1, 0);
-
-                        if(Math.abs(t) > 0.0000001) {
-                            t = -origin.dot(0, 1, 0) / t;
-                            origin.add(direction.mul(t));
-
-                            int r = (int)Math.floor(origin.z / cs);
-                            int c = (int)Math.floor(origin.x / cs);
-                            Tile existing = null;
-
-                            scene.lines.row = r;
-                            scene.lines.col = c;
-                            scene.lines.cellSize = cs;
-
-                            if(game.isButtonDown(0)) {
-                                for(Tile tile : tiles) {
-                                    if(tile.row == r && tile.col == c && tile.getCellSize() == cs && tile.layer == tileFactory.layer) {
-                                        existing = tile;
-                                    }
-                                }
-                                if(existing != null) {
-                                    tiles.remove(existing);
-                                    existing.node.detachFromParent();
-                                }
-                                if(mode == 3) {
-                                    Tile tile = tileFactory.newInstance(game, scene, r, c);
-
-                                    scene.root.addChild(tile.node);
-                                    tiles.add(tile);
+                                scene.selection = null;
+                                select(scene.root, origin, direction, time);
+                                if(scene.selection != null) {
+                                    resetComponents = true;
                                 }
                             }
+                        } else if(scene.selection != null) {
+                            matrix.identity().set(scene.selection.getParent().model).invert();
+
+                            if(mode == 5) {
+                                scene.move(scene.selection.position, game.getDeltaX(), game.getDeltaY(), matrix);
+                            } else if(mode == 6) {
+                                scene.move(scene.selection.position, -game.getDeltaY(), matrix);
+                            } else if(mode == 7) {
+                                scene.selection.rotation.rotate(game.getDeltaX() * 0.025f, 1, 0, 0);
+                            } else if(mode == 8) {
+                                scene.selection.rotation.rotate(game.getDeltaX() * 0.025f, 0, 1, 0);
+                            } else if(mode == 9) {
+                                scene.selection.rotation.rotate(game.getDeltaX() * 0.025f, 0, 0, 1);
+                            } else if(mode == 10) {
+                                float d = game.getDeltaY();
+
+                                if(d < 0) {
+                                    scene.selection.scale.mul(0.99f);
+                                } else if(d > 0) {
+                                    scene.selection.scale.mul(1.01f);
+                                }
+                            }
+                        } 
+                        down = true;
+                    } else {
+                        if(down && scene.selection != null && (mode == 5 || mode == 6) && snap > 0) {
+                            Vector3f p = scene.selection.position;
+
+                            p.x = Math.round(p.x / snap) * snap;
+                            p.y = Math.round(p.y / snap) * snap;
+                            p.z = Math.round(p.z / snap) * snap;
                         }
+                        down = false;
                     }
                 }
 
-                if(game.isKeyDown(GLFW.GLFW_KEY_SPACE)) {
-                    if(!spaceKeyDown) {
-                        spaceKeyDown = true;
-                        game.toggleFullscreen();
+                if(!scene.inDesign) {
+                    if(game.isKeyDown(GLFW.GLFW_KEY_ESCAPE)) {
+                        load(sceneFile, game, true);
                     }
-                } else {
-                    spaceKeyDown = false;
-                }
-                if(game.isKeyDown(GLFW.GLFW_KEY_S)) {
-                    if(!sKeyDown) {
-                        sKeyDown = true;
-                        sync = !sync;
-                        if(sync) {
-                            GLFW.glfwSwapInterval(1);
-                        } else {
-                            GLFW.glfwSwapInterval(0);
-                        }
-                    }
-                } else {
-                    sKeyDown = false;
                 }
             }
         } finally {
@@ -197,7 +166,7 @@ public class App {
         return scene;
     }
 
-    public static void pushInfo(Game game, Scene scene, Renderer renderer) {
+    public static void pushInfo(Game game, Scene scene, Renderer renderer, String extra) {
         String info = "";
 
         info += "F=" + game.getFPS() + ", ";
@@ -206,9 +175,8 @@ public class App {
         info += "B=" + renderer.getBinds() + ", ";
         info += "N=" + renderer.getNodes() + ", ";
         info += "L=" + renderer.getLights() + ", ";
-        info += "O=" + renderer.getObjects() + ", ";
-        info += "SPC=FS, ";
-        info += "S=Sync";
+        info += "O=" + renderer.getObjects();
+        info += " " + extra;
 
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         game.getSpritePipeline().beginSprite(manager.getFont());
@@ -217,18 +185,24 @@ public class App {
         game.getSpritePipeline().end();
     }
 
-    private static Scene load(File tileFile, Game game, boolean inDesign) throws Exception {
+    private static void load(File file, Game game, boolean inDesign) throws Exception {
         game.getAssets().clear();
-        
-        Scene scene = new Scene(game, inDesign);
 
-        scene.eye.set(400, 400, 400);
+        factory = null;
+        factories.clear();
+        factories.add(new Stone1());
+        factories.add(new Light1());
+        factories.add(new Info1());
 
-        tiles = Tile.load(tileFile, game, scene, 1024, 1024, 1);
+        factoryNames.clear();
+        for(NodeFactory iFactory : factories) {
+            factoryNames.add(iFactory.toString());
+        }
 
-        App.tileFile = tileFile;
+        scene = Serializer.deserialize(file, game, inDesign);
+        sceneFile = file;
 
-        return scene;
+        resetFactories = true;
     }
 
     private static boolean handleUI() throws Exception {
@@ -236,53 +210,147 @@ public class App {
 
         manager.begin();
         manager.moveTo(10, 10);
+        if(manager.label("fs-label", 0, "fs", 0, game.isFullscreen())) {
+            game.toggleFullscreen();
+        }
+        if(manager.label("sync-label", 5, "I", 0, sync)) {
+            sync = !sync;
+            if(sync) {
+                GLFW.glfwSwapInterval(1);
+            } else {
+                GLFW.glfwSwapInterval(0);
+            }
+        }
         for(int i = 0; i != modes.length; i++) {
-            if(manager.label("mode-" + modes[i] + "-label", (i == 0) ? 0 : 5, modes[i], 0, mode == i)) {
+            if(manager.label("mode-" + modes[i] + "-label", 5, modes[i], 0, mode == i)) {
                 mode = i;
             }
         }
         manager.addRow(5);
-        if(manager.label("load-label", 0, "Load", 0, showScenes)) {
+        if(manager.label("load-label", 0, "L", 0, showScenes)) {
             showScenes = !showScenes;
         }
-        if(manager.label("save-label", 5, "Save", 0, false)) {
+        if(manager.label("save-label", 5, "S", 0, false)) {
             try {
-                Tile.save(tiles, tileFile);
+                Serializer.serialize(scene, sceneFile);
             } catch(Exception ex) {
                 ex.printStackTrace();
             }
         }
-        if(manager.label("map-label", 5, "Map", 0, false)) {
-            Tile.map(game, tiles, 1024, 1024, 1, tileFile, true);
+        if(manager.label("play-label", 5, "P", 0, false)) {
+            load(sceneFile, game, false);
+            return manager.end();
         }
-        if(manager.label("map-clear-label", 5, "Clear", 0, false)) {
-            File file = IO.file(tileFile.getParentFile(), IO.fileNameWithOutExtension(tileFile) + ".png");
-
-            if(file.exists()) {
-                file.delete();
+        if(scene.selection != null) {
+            if(manager.label("position-to-target-label", 5, "P2T", 0, false)) {
+                scene.selection.position.set(scene.target);
             }
-            for(Tile tile : tiles) {
-                if(tile.node.renderable instanceof MeshRenderable) {
-                    MeshRenderable mesh = (MeshRenderable)tile.node.renderable;
+            if(manager.label("target-to-position-label", 5, "T2P", 0, false)) {
+                scene.target.set(scene.selection.position);
+            }
+            if(manager.label("target-to-zero-label", 5, "T2Z", 0, false)) {
+                Vector3f offset = new Vector3f();
 
-                    for(MeshPart part : mesh.mesh) {
-                        if(part.material instanceof DualTextureMaterial) {
-                            ((DualTextureMaterial)part.material).texture2 = null;
-                        }
-                    }
-                }
+                scene.eye.sub(scene.target, offset);
+                scene.target.zero();
+                scene.target.add(offset, scene.eye);
+            }
+            if(manager.label("zero-rot-label", 5, "ZR", 0, false)) {
+                scene.selection.rotation.identity();
+            }
+            if(manager.label("rot-x-45-label", 5, "RX45", 0, false)) {
+                scene.selection.rotation.rotate((float)Math.PI / 4, 1, 0, 0);
+            }
+            if(manager.label("rot-y-45-label", 5, "RY45", 0, false)) {
+                scene.selection.rotation.rotate((float)Math.PI / 4, 0, 1, 0);
+            }
+            if(manager.label("rot-z-45-label", 5, "RZ45", 0, false)) {
+                scene.selection.rotation.rotate((float)Math.PI / 4, 0, 0, 1);
+            }
+            if(manager.label("unit-scale-label", 5, "US", 0, false)) {
+                scene.selection.scale.set(1, 1, 1);
             }
         }
         manager.addRow(5);
         if(showScenes) {
             if((r = manager.list("scene-list", 0, sceneList, 10, 8, -2)) != null) {
-                scene = load(IO.file(IO.file("assets/tile-scenes"), sceneList.get((Integer)r) + ".txt"), game, true);
+                load(IO.file(IO.file("assets/scenes"), sceneList.get((Integer)r) + ".xml"), game, true);
                 showScenes = false;
             }
         }
-        if((r = manager.list("tile-factory-list", (showScenes) ? 5 : 0, tileFactoryNames, 15, 8, -2)) != null) {
-            tileFactory = tileFactories.get((Integer)r);
+        int sel = -2;
+        if(resetFactories) {
+            sel = -1;
+            resetFactories = false;
+        }
+        if((r = manager.list("node-factory-list", (showScenes) ? 5 : 0, factoryNames, 15, 8, sel)) != null) {
+            factory = factories.get((Integer)r);
+        }
+        if(factory != null) {
+            if(manager.label("add-node-label", 5, "+", 0, false)) {
+                Node node = factory.newInstance(game, scene);
+
+                if(scene.selection != null) {
+                    scene.selection.addChild(node);
+                } else {
+                    scene.root.addChild(node);
+                }
+                scene.selection = node;
+                resetComponents = true;
+            }
+        }
+        if(scene.selection != null) {
+            if(manager.label("del-node-label", 5, "-", 0, false)) {
+                scene.selection.detachFromParent();
+                scene.selection = null;
+            }
+            handleSnap();
+            if(scene.selection != null) {
+                manager.moveTo(game.getRenderTargetWidth() - 250, 10);
+                for(int i = 0; i != scene.selection.getComponentCount(); i++) {
+                    scene.selection.componentAt(i).handleUI(manager, resetComponents);
+                }
+            }
+            resetComponents = false;
+        } else {
+            handleSnap();
         }
         return manager.end();
+    }
+
+    private static void handleSnap() {
+        Object r;
+
+        manager.addRow(5);
+        if((r = manager.textField("snap-field", 0, "Snap", snap + "", resetSnap, 5)) != null) {
+            snap = Parser.parse(((String)r).split("\\s+"), 0, snap);
+            snap = Math.max(1, snap);
+        }
+        resetSnap = false;
+    }
+
+    private static void select(Node node, Vector3f origin, Vector3f direction, float[] time) {
+        if(node.getTriangleCount() != 0) {
+            for(int i = 0; i != node.getTriangleCount(); i++) {
+                node.triangleAt(i, triangle);
+                if(direction.dot(triangle.n) < 0) {
+                    if(triangle.intersects(origin, direction, 0, time)) {
+                        scene.selection = node;
+                    }
+                }
+            }
+        } else if(node != scene.root && !(node.renderable instanceof Lines)) {
+            bounds.min.set(node.absolutePosition);
+            bounds.max.set(node.absolutePosition);
+            bounds.min.sub(8, 8, 8);
+            bounds.max.add(8, 8, 8);
+
+            if(bounds.intersects(origin, direction, time)) {
+                scene.selection = node;
+            }
+        }
+        for(Node child : node) {
+            select(child, origin, direction, time);
+        }
     }
 }

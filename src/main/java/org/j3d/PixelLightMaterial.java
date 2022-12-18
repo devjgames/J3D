@@ -84,6 +84,16 @@ public class PixelLightMaterial extends Resource implements Material {
         int count = Math.min(MAX_LIGHTS, lights.size());
 
         pipeline.begin();
+        GL30.glBindVertexArray(vao);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, veo);
+        GL20.glEnableVertexAttribArray(0);
+        GL20.glEnableVertexAttribArray(1);
+        GL20.glEnableVertexAttribArray(2);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 32, 0);
+        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 32, 12);
+        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 32, 20);
+
         pipeline.set(uLightCount, count);
         for(int i = 0; i != count; i++) {
             Light light = lights.get(i);
@@ -102,15 +112,6 @@ public class PixelLightMaterial extends Resource implements Material {
 
     @Override
     public void render(Matrix4f projection, Matrix4f view, Matrix4f model) {
-        GL30.glBindVertexArray(vao);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, veo);
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 32, 0);
-        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 32, 12);
-        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 32, 20);
         pipeline.set(uProjection, projection);
         pipeline.set(uView, view);
         pipeline.set(uModel, model);

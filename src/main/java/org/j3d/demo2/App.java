@@ -42,6 +42,7 @@ public class App {
             Matrix4f projection = new Matrix4f();
             Matrix4f view = new Matrix4f();
             float radians = 0;
+            float radians2 = 0;
             PixelLightMaterial material = (PixelLightMaterial)cube.meshPartAt(0).material;
 
             material.ambientColor.set(1, 1, 1, 1);
@@ -82,7 +83,7 @@ public class App {
                 view.identity().lookAt(offset, target, up);
                 offset.sub(target, offset);
 
-                cube.model.identity().translate(target).rotate(radians, 0, 1, 0);
+                cube.model.identity().translate(target).rotate(radians, 0, 1, 0).rotate(radians2, 0, 0, 1);
                 
                 game.beginRenderTarget();
                 Utils.clear(0, 0, 1, 1);
@@ -117,7 +118,7 @@ public class App {
                     if(f.z > 0) {
                         radians = (float)Math.PI * 2 - radians;
                     }
-                    cube.meshPartAt(0).model.rotate(-(float)Math.PI * game.getElapsedTime(), 0, 0, 1);
+                    radians2 -= (float)Math.PI * game.getElapsedTime();
                 }
                 collider.velocity.y -= 2000 * game.getElapsedTime();
                 collider.collide(game, target);

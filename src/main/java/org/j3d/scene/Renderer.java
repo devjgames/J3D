@@ -158,6 +158,7 @@ public class Renderer {
         if(last != null) {
             last.material.end();
         }
+
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         scene.root.pushSprites(this);
         game.getSpritePipeline().end();

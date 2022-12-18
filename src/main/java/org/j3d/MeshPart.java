@@ -14,7 +14,6 @@ public class MeshPart implements TriangleSelector {
     public final int stride;
     public Material material = null;
     public final BoundingBox bounds = new BoundingBox();
-    public final Matrix4f model = new Matrix4f();
     public Object data = null;
 
     private FloatBuffer vBuf;
@@ -22,7 +21,6 @@ public class MeshPart implements TriangleSelector {
     private final Vector<int[]> faces = new Vector<>();
     private final Vector<Object> faceData = new Vector<>();
     private int vertexCount = 0;
-    private final Matrix4f matrix = new Matrix4f();
     private final BoundingBox objBounds = new BoundingBox();
     private boolean enabled = true;
     private final Triangle triangle = new Triangle();
@@ -118,7 +116,7 @@ public class MeshPart implements TriangleSelector {
         }
         bounds.min.set(objBounds.min);
         bounds.max.set(objBounds.max);
-        bounds.transform(matrix.set(mesh.model).mul(model));
+        bounds.transform(mesh.model);
     }
 
     public void push(float x) {
@@ -171,7 +169,7 @@ public class MeshPart implements TriangleSelector {
     public int render(Matrix4f projection, Matrix4f view) {
         if(material != null) {
             material.setSource(this);
-            material.render(projection, view, matrix.set(mesh.model).mul(model));
+            material.render(projection, view, mesh.model);
             return 1;
         }
         return 0;
@@ -197,7 +195,7 @@ public class MeshPart implements TriangleSelector {
 
         for(int i = 0; i != getTriangleCount(); i++) {
             triangleAt(i, triangle);
-            triangle.transform(matrix.set(mesh.model).mul(model));
+            triangle.transform(mesh.model);
             if(collider.selectorIntersect(triangle)) {
                 hit = true;
             }
@@ -212,31 +210,12 @@ public class MeshPart implements TriangleSelector {
         if(collider.resolveBounds.touches(bounds)) {
             for(int i = 0; i != getTriangleCount(); i++) {
                 triangleAt(i, triangle);
-                triangle.transform(matrix.set(mesh.model).mul(model));
+                triangle.transform(mesh.model);
                 if(collider.selectorResolve(triangle)) {
                     hit = true;
                 }
             }
         }
         return hit;
-    }
-
-    public MeshPart newInstance(Mesh mesh) {
-        MeshPart part = new MeshPart(mesh, stride);
-
-        part.material = material;
-
-        for(int i = 0; i != vBuf.capacity(); i++) {
-            part.push(vBuf.get(i));
-        }
-        for(int[] face : faces) {
-            part.pushFace(face);
-        }
-        part.trim();
-        part.bufferIndices();
-        part.bufferVertices(false);
-        part.calcBounds();
-
-        return part;
     }
 }

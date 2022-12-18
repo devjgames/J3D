@@ -1,8 +1,7 @@
 package org.j3d.scene;
 
-import javax.swing.UIManager;
-
 import org.j3d.Game;
+import org.j3d.UIManager;
 
 public class NodeComponent {
     
@@ -37,7 +36,7 @@ public class NodeComponent {
     public void pushSprites(Renderer renderer) throws Exception {
     }
 
-    public void handleUI(UIManager manager) throws Exception {
+    public void handleUI(UIManager manager, boolean reset) throws Exception {
     }
 
     public void update() throws Exception {

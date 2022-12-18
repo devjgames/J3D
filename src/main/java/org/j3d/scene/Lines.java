@@ -23,11 +23,7 @@ public class Lines extends Resource implements Renderable, Material {
 
     public Node selection = null;
     public Scene scene = null;
-    public int row = 0;
-    public int col = 0;
-    public int cellSize = 0;
     public final Vector3f selectionColor = new Vector3f(1, 0, 1);
-    public final Vector3f cellColor = new Vector3f(1, 0, 1);
 
     private Pipeline pipeline;
     private int vao, vbo;
@@ -144,22 +140,10 @@ public class Lines extends Resource implements Renderable, Material {
         pushLine(t.x, t.y, t.z, t.x, t.y, t.z + d, 0, 0, 1);
 
         pushLights(scene.root);
-        pushTransforms(scene.root, true);
+        pushTransforms(scene.root);
         if(selection != null) {
             pushTriangles(selection);
         }
-
-        if(cellSize > 0) {
-            float r = cellColor.x;
-            float g = cellColor.y;
-            float b = cellColor.z;
-
-            pushLine(col * cellSize, 0, row * cellSize, col * cellSize + cellSize, 0, row * cellSize, r, g, b);
-            pushLine(col * cellSize + cellSize, 0, row * cellSize, col * cellSize + cellSize, 0, row * cellSize + cellSize, r, g, b);
-            pushLine(col * cellSize + cellSize, 0, row * cellSize + cellSize, col * cellSize, 0, row * cellSize + cellSize, r, g, b);
-            pushLine(col * cellSize, 0, row * cellSize + cellSize, col * cellSize, 0, row * cellSize, r, g, b);
-        }
-
         vBuf.flip();
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
@@ -214,30 +198,21 @@ public class Lines extends Resource implements Renderable, Material {
         }
     }
 
-    private void pushTransforms(Node node, boolean visible) {
-        if(visible) {
-            visible = node.visible;
+    private void pushTransforms(Node node) {
+        if(node.getParent() != null && node.renderable == null && !node.isLight) {
+            Vector3f p = node.absolutePosition;
+            float d = 8;
+
+            node.model.getColumn(0, r).normalize().mul(d);
+            node.model.getColumn(1, u).normalize().mul(d);
+            node.model.getColumn(2, f).normalize().mul(d);
+
+            pushLine(p.x - r.x, p.y - r.y, p.z - r.z, p.x + r.x, p.y + r.y, p.z + r.z, 1, 0, 0);
+            pushLine(p.x - u.x, p.y - u.y, p.z - u.z, p.x + u.x, p.y + u.y, p.z + u.z, 0, 1, 0);
+            pushLine(p.x - f.x, p.y - f.y, p.z - f.z, p.x + f.x, p.y + f.y, p.z + f.z, 0, 0, 1);
         }
-        if(visible) {
-            for(Node child : node) {
-                pushTransforms(child, true);
-            }
-        } else {
-            if(node.renderable != null) {
-                Vector3f p = node.absolutePosition;
-                float d = 8;
-
-                node.model.getRow(0, r).normalize().mul(d);
-                node.model.getRow(1, u).normalize().mul(d);
-                node.model.getRow(2, f).normalize().mul(d);
-
-                pushLine(p.x - r.x - u.x - f.x, p.y - r.y - u.y - f.y, p.z - r.z - u.z - f.z, p.x + r.x + u.x + f.x, p.y - r.y - u.y - f.y, p.z - r.z - u.z - f.z, 1, 0, 0);
-                pushLine(p.x - r.x - u.x - f.x, p.y - r.y - u.y - f.y, p.z - r.z - u.z - f.z, p.x - r.x - u.x - f.x, p.y + r.y + u.y + f.y, p.z - r.z - u.z - f.z, 0, 1, 0);
-                pushLine(p.x - r.x - u.x - f.x, p.y - r.y - u.y - f.y, p.z - r.z - u.z - f.z, p.x - r.x - u.x - f.x, p.y - r.y - u.y - f.y, p.z + r.z + u.z + f.z, 0, 0, 1);
-            }
-            for(Node child : node) {
-                pushTransforms(child, false);
-            }
+        for(Node child : node) {
+            pushTransforms(child);
         }
     }
 

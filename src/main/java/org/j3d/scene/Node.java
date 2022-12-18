@@ -1,5 +1,7 @@
 package org.j3d.scene;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -9,10 +11,13 @@ import org.j3d.Collider;
 import org.j3d.CullState;
 import org.j3d.DepthState;
 import org.j3d.Game;
+import org.j3d.Parser;
 import org.j3d.Triangle;
 import org.j3d.Collider.TriangleSelector;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 public class Node implements Iterable<Node>, TriangleSelector {
     
@@ -24,7 +29,7 @@ public class Node implements Iterable<Node>, TriangleSelector {
     public final Matrix4f model = new Matrix4f();
     public final BoundingBox bounds = new BoundingBox();
     public final Vector3f lightColor = new Vector3f(1, 1, 1);
-    public float lightRadius = 600;
+    public float lightRadius = 400;
     public boolean isLight = false;
     public DepthState depthState = DepthState.READ_WRITE;
     public BlendState blendState = BlendState.OPAQUE;
@@ -251,6 +256,59 @@ public class Node implements Iterable<Node>, TriangleSelector {
         }
         for(Node node : this) {
             node.addToCollider(collider);
+        }
+    }
+
+    public Node newInstance(Game game, Scene scene) throws Exception {
+        Node node = (Node)getClass().getConstructors()[0].newInstance();
+
+        copy(this, node);
+
+        if(renderable != null && !(renderable instanceof Lines)) {
+            node.renderable = renderable.newInstance();
+        }
+        for(Node child : this) {
+            node.addChild(child.newInstance(game, scene));
+        }
+        node.calcBoundsAndTransform();
+        for(int i = 0; i != getComponentCount(); i++) {
+            NodeComponent src = componentAt(i);
+            NodeComponent dst = (NodeComponent)src.getClass().getConstructors()[0].newInstance();
+
+            copy(src, dst);
+            node.addComponent(game, scene, dst);
+            dst.init();
+            dst.start();
+        }
+        return node;
+    }
+
+    private void copy(Object src, Object dst) throws Exception {
+        Field[] fields = src.getClass().getFields();
+
+        for(Field field : fields) {
+            Class<? extends Object> cls = field.getType();
+            int m = field.getModifiers();
+
+            if(
+                boolean.class.isAssignableFrom(cls) ||
+                int.class.isAssignableFrom(cls) ||
+                float.class.isAssignableFrom(cls) ||
+                String.class.isAssignableFrom(cls) ||
+                Vector2f.class.isAssignableFrom(cls) ||
+                Vector3f.class.isAssignableFrom(cls) ||
+                Vector4f.class.isAssignableFrom(cls) ||
+                Matrix4f.class.isAssignableFrom(cls) ||
+                cls.isEnum()) {
+                if(Modifier.isPublic(m) && !Modifier.isStatic(m)) {
+
+                    if(Modifier.isFinal(m)) {
+                        Parser.parseObject(Parser.toString(field.get(src)).split("\\s+"), 0, field.get(dst));
+                    } else {
+                        field.set(dst, field.get(src));
+                    }
+                }
+            }
         }
     }
 }

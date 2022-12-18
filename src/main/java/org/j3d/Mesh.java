@@ -53,7 +53,7 @@ public class Mesh implements Iterable<MeshPart> {
         Mesh mesh = new Mesh();
 
         for(MeshPart part : this) {
-            mesh.addMeshPart(part.newInstance(mesh));
+            mesh.addMeshPart(part);
         }
         mesh.calcBounds();
         
