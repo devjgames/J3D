@@ -16,8 +16,10 @@ import org.j3d.scene.Node;
 import org.j3d.scene.Renderer;
 import org.j3d.scene.Scene;
 import org.j3d.scene.Serializer;
+import org.j3d.scene.demo1.factories.Bridge1;
 import org.j3d.scene.demo1.factories.Info1;
 import org.j3d.scene.demo1.factories.Light1;
+import org.j3d.scene.demo1.factories.Player;
 import org.j3d.scene.demo1.factories.Stone1;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -190,7 +192,9 @@ public class App {
 
         factory = null;
         factories.clear();
+        factories.add(new Player());
         factories.add(new Stone1());
+        factories.add(new Bridge1());
         factories.add(new Light1());
         factories.add(new Info1());
 
