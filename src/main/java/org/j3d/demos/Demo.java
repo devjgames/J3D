@@ -3,7 +3,6 @@ package org.j3d.demos;
 import org.j3d.Collider;
 import org.j3d.Font;
 import org.j3d.Game;
-import org.j3d.LightMapPipeline;
 import org.j3d.Resource;
 import org.joml.Matrix4f;
 
@@ -19,12 +18,10 @@ public abstract class Demo {
     public void pushInfo(App app, Collider collider) {
         Game game = app.getGame();
         Font font = app.getFont();
-        LightMapPipeline lightMapper = app.getLightMapper();
         String info = "";
 
         info += "FPS = " + game.getFPS() + "\n";
         info += "RES = " + Resource.getInstances() + "\n";
-        info += "LIT = " + lightMapper.lights.size() + "\n";
 
         if(collider != null) {
             info += "TST = " + collider.getTested() + "\n";

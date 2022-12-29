@@ -2,18 +2,19 @@
 
 in vec3 vsInPosition;
 in vec2 vsInTextureCoordinate;
-in vec2 vsInTextureCoordinate2;
+in vec3 vsInNormal;
 
 out vec2 fsInTextureCoordinate;
-out vec2 fsInTextureCoordinate2;
+out vec3 fsInNormal;
 
 uniform mat4 uProjection;
 uniform mat4 uView;
 uniform mat4 uModel;
+uniform mat4 uModelIT;
 
 void main() {
     gl_Position = uProjection * uView * uModel * vec4(vsInPosition, 1.0);
 
     fsInTextureCoordinate = vsInTextureCoordinate;
-    fsInTextureCoordinate2 = vsInTextureCoordinate2;
+    fsInNormal = normalize((uModelIT * vec4(vsInNormal, 0.0)).xyz);
 }

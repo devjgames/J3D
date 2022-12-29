@@ -5,7 +5,6 @@ import java.util.Vector;
 import org.j3d.Font;
 import org.j3d.Game;
 import org.j3d.IO;
-import org.j3d.LightMapPipeline;
 import org.j3d.UIManager;
 import org.j3d.Utils;
 import org.lwjgl.glfw.GLFW;
@@ -15,7 +14,6 @@ public class App {
     private Game game = null;
     private Font font;
     private UIManager manager;
-    private LightMapPipeline lightMapper;
     private Vector<Demo> demos = new Vector<>();
     private Vector<String> demoNames = new Vector<>();
 
@@ -31,10 +29,6 @@ public class App {
         return manager;
     }
 
-    public LightMapPipeline getLightMapper() {
-        return lightMapper;
-    }
-
     public void run(Demo ... list) throws Exception {
         Demo demo = null;
         boolean sync = true;
@@ -43,7 +37,6 @@ public class App {
             game = new Game(1000, 800, true);
             font = game.getResources().manage(new Font(IO.file("assets/pics/font.fnt")));
             manager = new UIManager(game, font);
-            lightMapper = game.getResources().manage(new LightMapPipeline(1024, 1024));
             GLFW.glfwSwapInterval(1);
 
             for(Demo iDemo : list) {
@@ -81,8 +74,6 @@ public class App {
                     }
                     manager.addRow(5);
                     if((r = manager.list("App-demos", 0, demoNames, 20, 8, select)) != null) {
-                        lightMapper.lights.clear();
-                        lightMapper.meshes.clear();
                         game.getAssets().clear();
                         demo = demos.get((Integer)r);
                         demo.init(this);
@@ -101,8 +92,10 @@ public class App {
 
     public static void main(String[] args) throws Exception {
         new App().run(
-            new CubeDemo(),
-            new CollisionDemo()
+            new MeshDemo(),
+            new LitMeshDemo(),
+            new InstanceDemo(),
+            new LitInstanceDemo()
         );
     }
 }
