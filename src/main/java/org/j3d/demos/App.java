@@ -59,6 +59,7 @@ public class App {
                     if(!demo.update(this)) {
                         select = -1;
                         demo = null;
+                        game.getAssets().clear();
                     }
                 } else {
                     Object r;
@@ -100,7 +101,8 @@ public class App {
 
     public static void main(String[] args) throws Exception {
         new App().run(
-            new CubeDemo()
+            new CubeDemo(),
+            new CollisionDemo()
         );
     }
 }

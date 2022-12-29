@@ -150,10 +150,10 @@ public class LightMapPipeline extends Resource {
                     return false;
                 }
                 mesh.faceNormalAt(i, normal);
-                mesh.vertexAt(mesh.faceVertexAt(i, 0), p1);
-                mesh.vertexAt(mesh.faceVertexAt(i, 1), p2);
-                mesh.vertexAt(mesh.faceVertexAt(i, 2), p3);
-                mesh.vertexAt(mesh.faceVertexAt(i, 3), p4);
+                mesh.vertexPositionAt(mesh.faceVertexAt(i, 0), p1);
+                mesh.vertexPositionAt(mesh.faceVertexAt(i, 1), p2);
+                mesh.vertexPositionAt(mesh.faceVertexAt(i, 2), p3);
+                mesh.vertexPositionAt(mesh.faceVertexAt(i, 3), p4);
 
                 p2.sub(p1, u);
                 u.cross(normal, v);

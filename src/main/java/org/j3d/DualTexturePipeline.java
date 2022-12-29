@@ -30,14 +30,15 @@ public class DualTexturePipeline extends Resource implements TriangleSelector {
     private final int uColor;
     private final int uTexture, uTextureEnabled;
     private final int uTexture2, uTexture2Enabled;
-    private FloatBuffer vBuf = BufferUtils.createFloatBuffer(10 * 7);
-    private IntBuffer iBuf = BufferUtils.createIntBuffer(9);
+    private FloatBuffer vBuf = BufferUtils.createFloatBuffer(4 * 6 * 7);
+    private IntBuffer iBuf = BufferUtils.createIntBuffer(6 * 6);
     private boolean enabled = true;
     private final Triangle triangle = new Triangle();
     private final Vector<int[]> faces = new Vector<>();
     private final BoundingBox bounds = new BoundingBox();
     private final Vector3f v1 = new Vector3f();
     private final Vector3f v2 = new Vector3f();
+    private final Vector3f v3 = new Vector3f();
     private final Vector3f p1 = new Vector3f();
     private final Vector3f p2 = new Vector3f();
     private final Vector3f p3 = new Vector3f();
@@ -100,7 +101,7 @@ public class DualTexturePipeline extends Resource implements TriangleSelector {
         return vertexCount;
     }
 
-    public void vertexAt(int i, Vector3f position) {
+    public void vertexPositionAt(int i, Vector3f position) {
         position.set(vBuf.get(i * 7 + 0), vBuf.get(i * 7 + 1), vBuf.get(i * 7 + 2));
     }
 
@@ -112,6 +113,11 @@ public class DualTexturePipeline extends Resource implements TriangleSelector {
 
     public void setVertexPositionAt(int i, Vector3f position) {
         setVertexPositionAt(i, position.x, position.y, position.z);
+    }
+
+    public void setTextureCoordinateAt(int i, float s, float t) {
+        vBuf.put(i * 7 + 3, s);
+        vBuf.put(i * 7 + 4, t);
     }
 
     public void setTextureCoordinate2At(int i, float u, float v) {
@@ -160,6 +166,87 @@ public class DualTexturePipeline extends Resource implements TriangleSelector {
             iBuf.put(indices[0]);
             iBuf.put(indices[i + 1]);
             iBuf.put(indices[i + 2]);
+        }
+    }
+
+    public void pushBox(float x, float y, float z, float sx, float sy, float sz) {
+        int n = getVertexCount();
+
+        sx /= 2;
+        sy /= 2;
+        sz /= 2;
+
+        pushVertex(x - sx, y - sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y + sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y + sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y - sy, z - sz, 0, 0, 0, 0);
+        pushFace(n, n + 1, n + 2, n + 3);
+        n += 4;
+
+        pushVertex(x - sx, y - sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y - sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y + sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y + sy, z + sz, 0, 0, 0, 0);
+        pushFace(n, n + 1, n + 2, n + 3);
+        n += 4;
+
+        pushVertex(x - sx, y - sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y - sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y + sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y + sy, z - sz, 0, 0, 0, 0);
+        pushFace(n, n + 1, n + 2, n + 3);
+        n += 4;
+
+        pushVertex(x + sx, y - sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y + sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y + sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y - sy, z + sz, 0, 0, 0, 0);
+        pushFace(n, n + 1, n + 2, n + 3);
+        n += 4;
+
+        pushVertex(x - sx, y - sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y - sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y - sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y - sy, z + sz, 0, 0, 0, 0);
+        pushFace(n, n + 1, n + 2, n + 3);
+        n += 4;
+
+        pushVertex(x - sx, y + sy, z - sz, 0, 0, 0, 0);
+        pushVertex(x - sx, y + sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y + sy, z + sz, 0, 0, 0, 0);
+        pushVertex(x + sx, y + sy, z - sz, 0, 0, 0, 0);
+        pushFace(n, n + 1, n + 2, n + 3);
+    }
+
+    public void transform(int startVertex, int endVertex, Matrix4f transform) {
+        for(int i = startVertex; i != endVertex; i++) {
+            vertexPositionAt(i, p1);
+            p1.mulPosition(transform);
+            setVertexPositionAt(i, p1);
+        }
+    }
+
+    public void calcTextureCoordinates(int startFace, int endFace, float units) {
+        for(int i = startFace; i != endFace; i++) {
+            float nx, ny, nz;
+
+            faceNormalAt(i, v3);
+            nx = Math.abs(v3.x);
+            ny = Math.abs(v3.y);
+            nz = Math.abs(v3.z);
+
+            for(int j = 0; j != 4; j++) {
+                int k = faceVertexAt(i, j);
+
+                vertexPositionAt(k, p1);
+                if(nx >= ny && nx >= nz) {
+                    setTextureCoordinateAt(k, p1.z / units, p1.y / units);
+                } else if(ny >= nx && ny >= nz) {
+                    setTextureCoordinateAt(k, p1.x / units, p1.z / units);
+                } else {
+                    setTextureCoordinateAt(k, p1.x / units, p1.y / units);
+                }
+            }
         }
     }
 
@@ -255,6 +342,14 @@ public class DualTexturePipeline extends Resource implements TriangleSelector {
             }
         }
         return hit;
+    }
+
+    public void calcBounds() {
+        bounds.clear();
+        for(int i = 0; i != getVertexCount(); i++) {
+            vertexPositionAt(i, p1);
+            bounds.add(p1);
+        }
     }
 
     @Override
