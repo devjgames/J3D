@@ -116,6 +116,8 @@ public class Utils {
             nBuf.put(iBuf);
             nBuf.flip();
             iBuf = nBuf;
+        } else {
+            iBuf.flip();
         }
         return iBuf;
     }
@@ -128,6 +130,8 @@ public class Utils {
             nBuf.put(vBuf);
             nBuf.flip();
             vBuf = nBuf;
+        } else {
+            vBuf.flip();
         }
         return vBuf;
     }

@@ -21,8 +21,6 @@ RenderTarget - manage OpenGL RenderTargets
 
 Pipeline - manage OpenGL pipelines
 
-SpritePipeline - render text and sprites
-
 Font - manages a row/column fixed width bitmap font
 
 Sound - plays small wav sounds
@@ -30,10 +28,6 @@ Sound - plays small wav sounds
 UIManager - create and run a UI in the same place with built-in label, text field, slider & list controls
 
 Resource - base class for all classes that need to be managed by a resource manager
-
-Mesh - configurable mesh class
-
-MeshLoader - loads position/texture/normal meshes from OBJ files
 
 Collider - class for resolving player movement against triangles in a scene
 

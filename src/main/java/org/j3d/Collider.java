@@ -75,7 +75,7 @@ public class Collider {
     public boolean selectorIntersect(Triangle triangle) {
         if((triangle.tag & intersectionBits) != 0) {
             if(triangle.intersects(origin, direction, intersectionBuffer, time)) {
-                triangle.set(triangle);
+                this.triangle.set(triangle);
                 return true;
             }
         }
@@ -84,7 +84,7 @@ public class Collider {
 
     public boolean selectorResolve(Triangle triangle) {
         if(triangle.resolve(rPos, radius, position, rNormal, time)) {
-            triangle.set(triangle);
+            this.triangle.set(triangle);
             return true;
         }
         tested++;
