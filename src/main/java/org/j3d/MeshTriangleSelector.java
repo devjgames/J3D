@@ -10,6 +10,7 @@ public class MeshTriangleSelector implements TriangleSelector {
 
     private boolean enabled = true;
     private final Triangle triangle = new Triangle();
+    private final BoundingBox bounds = new BoundingBox();
 
     public MeshTriangleSelector(LightPipeline mesh) {
         this.mesh = mesh;
@@ -35,8 +36,13 @@ public class MeshTriangleSelector implements TriangleSelector {
         float t = collider.time[0];
         boolean hit = false;
 
+        mesh.model.set(model);
+        bounds.min.set(mesh.getBounds().min);
+        bounds.max.set(mesh.getBounds().max);
+        bounds.transform(model);
+
         collider.time[0] = Float.MAX_VALUE;
-        if(mesh.getBounds().intersects(collider.origin, collider.direction, collider.time)) {
+        if(bounds.intersects(collider.origin, collider.direction, collider.time)) {
             collider.time[0] = t;
             for(int i = 0; i != mesh.getTriangleCount(); i++) {
                 mesh.triangleAt(i, triangle);
@@ -54,7 +60,12 @@ public class MeshTriangleSelector implements TriangleSelector {
     public boolean resolve(Collider collider) {
         boolean hit = false;
 
-        if(mesh.getBounds().touches(collider.resolveBounds)) {
+        mesh.model.set(model);
+        bounds.min.set(mesh.getBounds().min);
+        bounds.max.set(mesh.getBounds().max);
+        bounds.transform(model);
+
+        if(bounds.touches(collider.resolveBounds)) {
             for(int i = 0; i != mesh.getTriangleCount(); i++) {
                 mesh.triangleAt(i, triangle);
                 if(collider.selectorResolve(triangle)) {

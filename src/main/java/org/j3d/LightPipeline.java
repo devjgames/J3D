@@ -183,9 +183,9 @@ public class LightPipeline extends Resource implements Asset {
     }
 
     private int calcTriangle(int i) {
-        int i1 = i++;
-        int i2 = i++;
-        int i3 = i++;
+        int i1 = iBuf.get(i++);
+        int i2 = iBuf.get(i++);
+        int i3 = iBuf.get(i++);
         
         triangle.p1.set(vBuf.get(i1 * 8 + 0), vBuf.get(i1 * 8 + 1), vBuf.get(i1 * 8 + 2));
         triangle.p2.set(vBuf.get(i2 * 8 + 0), vBuf.get(i2 * 8 + 1), vBuf.get(i2 * 8 + 2));

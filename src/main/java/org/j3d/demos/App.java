@@ -95,7 +95,9 @@ public class App {
             new MeshDemo(),
             new LitMeshDemo(),
             new InstanceDemo(),
-            new LitInstanceDemo()
+            new LitInstanceDemo(),
+            new CollisionDemo(),
+            new LitCollisionDemo()
         );
     }
 }
