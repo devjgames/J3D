@@ -82,7 +82,7 @@ public class App {
                         }
                     }
                     manager.addRow(5);
-                    if((r = manager.list("App-demos", 0, demoNames, 20, 8, select)) != null) {
+                    if((r = manager.list("App-demos", 0, demoNames, 20, 7, select)) != null) {
                         game.getAssets().clear();
                         demo = demos.get((Integer)r);
                         demo.init(this);
@@ -108,7 +108,8 @@ public class App {
             new LitInstanceDemo(),
             new CollisionDemo(),
             new LitCollisionDemo(),
-            new FPSDemo()
+            new FPSDemo(),
+            new CameraDemo()
         );
     }
 }

@@ -51,7 +51,7 @@ public abstract class Demo {
         offset.negate(f).mul(1, 0, 1);
         if(game.isButtonDown(0) && f.length() > 0.0000001f && dl > 0.1f) {
             f.normalize().cross(u.set(0, 1, 0), r).normalize();
-            f.mul(-dy / dl * 250).add(r.mul(dx / dl * 250));
+            f.mul(-dy / dl * speed).add(r.mul(dx / dl * speed));
             collider.velocity.add(f);
             f.normalize();
             radians1 = (float)Math.acos(Math.max(-0.99f, Math.min(0.99f, f.x)));
