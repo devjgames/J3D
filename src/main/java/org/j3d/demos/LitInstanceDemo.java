@@ -21,8 +21,8 @@ public class LitInstanceDemo extends Demo {
         mesh = game.getAssets().load(IO.file("assets/meshes/ledge1.obj"));
         mesh.texture = game.getAssets().load(IO.file("assets/meshes/ledge1.png"));
 
-        mesh.addLight(-1, -2, -1, 1, 0.75f, 0.5f, 1);
-        mesh.addLight(+1, -2, +1, 0.5f, 0.75f, 1, 1);
+        mesh.addLight(-1, -2, -1, 1, 0.75f, 0.5f, 1, 0, true);
+        mesh.addLight(+1, -2, +1, 0.5f, 0.75f, 1, 1, 0, true);
     }
 
     @Override

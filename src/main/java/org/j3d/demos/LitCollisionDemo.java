@@ -30,8 +30,8 @@ public class LitCollisionDemo extends Demo {
 
         selectors.add(new MeshTriangleSelector(game.getAssets().load(IO.file("assets/meshes/ledge1.obj"))));
         selectors.lastElement().mesh.texture = game.getAssets().load(IO.file("assets/meshes/ledge1.png"));
-        selectors.lastElement().mesh.addLight(-1, -2, -1, 1, 0.75f, 0.5f, 1);
-        selectors.lastElement().mesh.addLight(+1, -2, +1, 0.5f, 0.75f, 1, 1);
+        selectors.lastElement().mesh.addLight(-1, -2, -1, 1, 0.75f, 0.5f, 1, 0, true);
+        selectors.lastElement().mesh.addLight(+1, -2, +1, 0.5f, 0.75f, 1, 1, 0, true);
 
         selectors.add(new MeshTriangleSelector(selectors.firstElement().mesh));
         selectors.lastElement().model.identity().translate(-300, 100, -300);

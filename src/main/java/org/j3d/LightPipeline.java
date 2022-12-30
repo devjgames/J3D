@@ -16,11 +16,13 @@ import org.lwjgl.opengl.GL30;
 
 public class LightPipeline extends Resource implements Asset {
 
-    public static final int MAX_LIGHTS = 3;
+    public static final int MAX_LIGHTS = 6;
     
     public static class Light {
-        public final Vector3f direction = new Vector3f(0, -1, -0);
+        public final Vector3f vector = new Vector3f(0, -1, -0);
         public final Vector4f color = new Vector4f(1, 1, 1, 1);
+        public float radius = 200;
+        public boolean directional = true;
     }
 
     public final Vector<Light> lights = new Vector<>();
@@ -33,8 +35,10 @@ public class LightPipeline extends Resource implements Asset {
     private final File file;
     private final Pipeline pipeline;
     private final int uProjection, uView, uModel, uModelIT;
-    private final int[] uLightDirection = new int[MAX_LIGHTS];
+    private final int[] uLightVector = new int[MAX_LIGHTS];
     private final int[] uLightColor = new int[MAX_LIGHTS];
+    private final int[] uLightRadius = new int[MAX_LIGHTS];
+    private final int[] uLightDirectional = new int[MAX_LIGHTS];
     private final int uLightCount;
     private final int uAmbientColor, uDiffuseColor;
     private final int uTexture, uTextureEnabled;
@@ -58,8 +62,10 @@ public class LightPipeline extends Resource implements Asset {
         uModel = pipeline.getUniformLocation("uModel");
         uModelIT = pipeline.getUniformLocation("uModelIT");
         for(int i = 0; i != MAX_LIGHTS; i++) {
-            uLightDirection[i] = pipeline.getUniformLocation("uLightDirection[" + i + "]");
+            uLightVector[i] = pipeline.getUniformLocation("uLightVector[" + i + "]");
             uLightColor[i] = pipeline.getUniformLocation("uLightColor[" + i + "]");
+            uLightRadius[i] = pipeline.getUniformLocation("uLightRadius[" + i + "]");
+            uLightDirectional[i] = pipeline.getUniformLocation("uLightDirectional[" + i + "]");
         }
         uLightCount = pipeline.getUniformLocation("uLightCount");
         uAmbientColor = pipeline.getUniformLocation("uAmbientColor");
@@ -76,11 +82,13 @@ public class LightPipeline extends Resource implements Asset {
         return file;
     }
 
-    public void addLight(float x, float y, float z, float r, float g, float b, float a) {
+    public void addLight(float x, float y, float z, float r, float g, float b, float a, float radius, boolean directional) {
         Light light = new Light();
 
-        light.direction.set(x, y, z);
+        light.vector.set(x, y, z);
         light.color.set(r, g, b, a);
+        light.radius = radius;
+        light.directional = directional;
 
         lights.add(light);
     }
@@ -156,8 +164,10 @@ public class LightPipeline extends Resource implements Asset {
         for(int i = 0; i != count; i++) {
             Light light = lights.get(i);
 
-            pipeline.set(uLightDirection[i], light.direction);
+            pipeline.set(uLightVector[i], light.vector);
             pipeline.set(uLightColor[i], light.color);
+            pipeline.set(uLightRadius[i], light.radius);
+            pipeline.set(uLightDirectional[i], light.directional);
         }
         pipeline.set(uAmbientColor, ambientColor);
         pipeline.set(uDiffuseColor, diffuseColor);

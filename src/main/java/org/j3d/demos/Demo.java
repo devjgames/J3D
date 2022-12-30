@@ -70,6 +70,18 @@ public abstract class Demo {
         return true;
     }
 
+    public void collide(Game game, Collider collider, Vector3f eye, Vector3f direction, int speed) throws Exception {
+        f.set(direction).mul(1, 0, 1);
+        collider.velocity.mul(0, 1, 0);
+        if((game.isButtonDown(0) || game.isButtonDown(1)) && f.length() > 0.0000001) {
+            if(game.isButtonDown(1)) {
+                speed = -speed;
+            }
+            collider.velocity.add(f.normalize().mul(speed));
+        }
+        collider.collide(game, eye);
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName();

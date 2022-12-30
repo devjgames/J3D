@@ -33,6 +33,7 @@ public class App {
         Demo demo = null;
         boolean sync = true;
         int select = -2;
+        int skipCount = 0;
         try {
             game = new Game(1000, 800, true);
             font = game.getResources().manage(new Font(IO.file("assets/pics/font.fnt")));
@@ -49,10 +50,18 @@ public class App {
             game.resetTimer();
             while(game.run()) {
                 if(demo != null) {
-                    if(!demo.update(this)) {
-                        select = -1;
-                        demo = null;
-                        game.getAssets().clear();
+                    if(skipCount > 0) {
+                        skipCount--;
+                        game.beginRenderTarget();
+                        Utils.clear(0, 0, 0, 1);
+                        game.nextFrame();
+                    } else {
+                        if(!demo.update(this)) {
+                            select = -1;
+                            demo = null;
+                            game.disableFPSMouse();
+                            game.getAssets().clear();
+                        }
                     }
                 } else {
                     Object r;
@@ -77,6 +86,7 @@ public class App {
                         game.getAssets().clear();
                         demo = demos.get((Integer)r);
                         demo.init(this);
+                        skipCount = 6;
                     }
                     select = -2;
                     manager.end();
@@ -97,7 +107,8 @@ public class App {
             new InstanceDemo(),
             new LitInstanceDemo(),
             new CollisionDemo(),
-            new LitCollisionDemo()
+            new LitCollisionDemo(),
+            new FPSDemo()
         );
     }
 }
