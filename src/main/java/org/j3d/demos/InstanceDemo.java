@@ -35,11 +35,11 @@ public class InstanceDemo extends Demo {
         Utils.clear(0.2f, 0.2f, 0.2f, 1);
         mesh.model.identity();
         mesh.render(projection, view);
-        mesh.model.identity().translate(-300, 100, -300);
+        mesh.setTransform(-300, 100, -300, 0, 0, 0, 1);
         mesh.render(projection, view);
-        mesh.model.identity().translate(+200, 150, -200).rotate((float)Math.PI / 4, 0, 1, 0).scale(0.75f);
+        mesh.setTransform(+200, 150, -200, 0, 45, 0, 0.75f);
         mesh.render(projection, view);
-        mesh.model.identity().translate(0, -100, 300).rotate((float)Math.PI / 4, 0, 1, 0).scale(0.5f);
+        mesh.setTransform(0, -100, 300, 0, 45, 0, 0.5f);
         mesh.render(projection, view);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         pushInfo(app, null);

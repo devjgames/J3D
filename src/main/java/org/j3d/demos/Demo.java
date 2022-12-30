@@ -4,6 +4,7 @@ import org.j3d.Collider;
 import org.j3d.Font;
 import org.j3d.Game;
 import org.j3d.Resource;
+import org.j3d.Utils;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -13,8 +14,8 @@ public abstract class Demo {
 
     public final Matrix4f projection = new Matrix4f();
     public final Matrix4f view = new Matrix4f();
-    public float radians1 = 0;
-    public float radians2 = 0;
+    public float degrees1 = 0;
+    public float degrees2 = 0;
 
     private Vector3f r = new Vector3f();
     private Vector3f u = new Vector3f();
@@ -54,11 +55,11 @@ public abstract class Demo {
             f.mul(-dy / dl * speed).add(r.mul(dx / dl * speed));
             collider.velocity.add(f);
             f.normalize();
-            radians1 = (float)Math.acos(Math.max(-0.99f, Math.min(0.99f, f.x)));
+            degrees1 = Utils.toDegrees((float)Math.acos(Math.max(-0.99f, Math.min(0.99f, f.x))));
             if(f.z > 0) {
-                radians1 = (float)Math.PI * 2 - radians1;
+                degrees1 = 360 - degrees1;
             }
-            radians2 -= (float)Math.PI * game.getElapsedTime();
+            degrees2 -= Utils.toDegrees((float)Math.PI * game.getElapsedTime());
         }
         if(game.isKeyDown(GLFW.GLFW_KEY_SPACE) && collider.getOnGround() && jump > 0) {
             collider.velocity.y = 1200;

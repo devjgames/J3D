@@ -45,14 +45,14 @@ public class CameraDemo extends Demo {
         ledges = new Vector<>();
         ledges.add(new MeshTriangleSelector(game.getAssets().load(IO.file("assets/meshes/ledge1.obj"))));
         ledges.lastElement().mesh.texture = game.getAssets().load(IO.file("assets/meshes/ledge1.png"));
-        ledges.lastElement().model.identity().translate(400, 40, 375).rotate((float)Math.PI / 8, 1, 0, 0).rotate((float)Math.PI / 5, 0, 0, 1).scale(0.35f);
         ledges.lastElement().mesh.lights.addAll(flats.lights);
+        ledges.lastElement().setTransform(400, 40, 375, 22.5f, 0, 36, 0.35f); 
         
         ledges.add(new MeshTriangleSelector(ledges.firstElement().mesh));
-        ledges.lastElement().model.identity().translate(0, 125, 375).rotate(-(float)Math.PI / 4, 1, 0, 0).rotate(-(float)Math.PI / 6, 0, 0, 1).scale(0.25f);
+        ledges.lastElement().setTransform(0, 125, 375, -45, 0, -30, 0.25f);
 
         ledges.add(new MeshTriangleSelector(ledges.firstElement().mesh));
-        ledges.lastElement().model.identity().translate(-50, 100, -50).rotate((float)Math.PI / 4, 1, 0, 0).rotate(-(float)Math.PI / 6, 0, 0, 1).scale(0.25f);
+        ledges.lastElement().setTransform(-50, 100, -50, 45, 0, -30, 0.25f);
 
         collider = new Collider();
         collider.radius = 20;
@@ -84,7 +84,7 @@ public class CameraDemo extends Demo {
         for(MeshTriangleSelector ledge : ledges) {
             ledge.render(projection, view);
         }
-        cube.model.identity().translate(target).rotate(radians1, 0, 1, 0).rotate(radians2, 0, 0, 1).scale(0.5f);
+        cube.setTransform(target.x, target.y, target.z, 0, degrees1, degrees2, 0.5f);
         cube.render(projection, view);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         pushInfo(app, collider);

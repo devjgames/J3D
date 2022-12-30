@@ -21,6 +21,15 @@ public class MeshTriangleSelector implements TriangleSelector {
         mesh.render(projection, view);
     }
 
+    public void setTransform(float x, float y, float z, float rx, float ry, float rz, float scale) {
+        model.identity()
+            .translate(x, y, z)
+            .rotate(Utils.toRadians(rx), 1, 0, 0)
+            .rotate(Utils.toRadians(ry), 0, 1, 0)
+            .rotate(Utils.toRadians(rz), 0, 0, 1)
+            .scale(scale);
+    }
+
     @Override
     public boolean getEnabled() {
         return enabled;

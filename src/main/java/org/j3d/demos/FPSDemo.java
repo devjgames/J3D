@@ -7,6 +7,7 @@ import org.j3d.Game;
 import org.j3d.IO;
 import org.j3d.LightPipeline;
 import org.j3d.MeshTriangleSelector;
+import org.j3d.Sound;
 import org.j3d.Utils;
 import org.j3d.Collider.TriangleSelector;
 import org.joml.Vector3f;
@@ -22,6 +23,7 @@ public class FPSDemo extends Demo {
     private LightPipeline flats;
     private LightPipeline walls;
     private Vector<MeshTriangleSelector> ledges;
+    private Sound sound;
 
     @Override
     public void init(App app) throws Exception {
@@ -40,14 +42,14 @@ public class FPSDemo extends Demo {
         ledges = new Vector<>();
         ledges.add(new MeshTriangleSelector(game.getAssets().load(IO.file("assets/meshes/ledge1.obj"))));
         ledges.lastElement().mesh.texture = game.getAssets().load(IO.file("assets/meshes/ledge1.png"));
-        ledges.lastElement().model.identity().translate(400, 40, 375).rotate((float)Math.PI / 8, 1, 0, 0).rotate((float)Math.PI / 5, 0, 0, 1).scale(0.35f);
         ledges.lastElement().mesh.lights.addAll(flats.lights);
+        ledges.lastElement().setTransform(400, 40, 375, 22.5f, 0, 36, 0.35f); 
         
         ledges.add(new MeshTriangleSelector(ledges.firstElement().mesh));
-        ledges.lastElement().model.identity().translate(0, 125, 375).rotate(-(float)Math.PI / 4, 1, 0, 0).rotate(-(float)Math.PI / 6, 0, 0, 1).scale(0.25f);
+        ledges.lastElement().setTransform(0, 125, 375, -45, 0, -30, 0.25f);
 
         ledges.add(new MeshTriangleSelector(ledges.firstElement().mesh));
-        ledges.lastElement().model.identity().translate(-50, 100, -50).rotate((float)Math.PI / 4, 1, 0, 0).rotate(-(float)Math.PI / 6, 0, 0, 1).scale(0.25f);
+        ledges.lastElement().setTransform(-50, 100, -50, 45, 0, -30, 0.25f);
 
         collider = new Collider();
         collider.addTriangleSelector(new MeshTriangleSelector(flats));
@@ -61,12 +63,18 @@ public class FPSDemo extends Demo {
         direction.set(0, 0, 1);
         up.set(0, 1, 0);
 
+        sound = game.getAssets().load(IO.file("assets/sounds/ambient.wav"));
+        sound.setVolume(0);
+        sound.play(true);
+
         game.enableFPSMouse();
     }
 
     @Override
     public boolean update(App app) throws Exception {
         Game game = app.getGame();
+
+        sound.setVolume(1 - Math.max(0, Math.min(1, eye.distance(0, 125, 375) / 300)));
 
         projection.identity().perspective((float)Math.PI / 3, game.getAspectRatio(), 1, 25000);
         eye.add(direction, target);

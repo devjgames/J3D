@@ -34,13 +34,13 @@ public class CollisionDemo extends Demo {
         selectors.lastElement().mesh.texture = game.getAssets().load(IO.file("assets/meshes/ledge1.png"));
 
         selectors.add(new MeshTriangleSelector(selectors.firstElement().mesh));
-        selectors.lastElement().model.identity().translate(-300, 100, -300);
+        selectors.lastElement().setTransform(-300, 100, -300, 0, 0, 0, 1);
 
         selectors.add(new MeshTriangleSelector(selectors.firstElement().mesh));
-        selectors.lastElement().model.identity().translate(+200, 150, -200).rotate((float)Math.PI / 4, 0, 1, 0).scale(0.75f);
+        selectors.lastElement().setTransform(+200, 150, -200, 0, 45, 0, 0.75f);
 
         selectors.add(new MeshTriangleSelector(selectors.firstElement().mesh));
-        selectors.lastElement().model.identity().translate(0, -100, 300).rotate((float)Math.PI / 4, 0, 1, 0).scale(0.5f);
+        selectors.lastElement().setTransform(0, -100, 300, 0, 45, 0, 0.5f);
 
         target.set(0, 64, 0);
         cube = game.getAssets().load(IO.file("assets/meshes/cube.obj"));
@@ -67,7 +67,7 @@ public class CollisionDemo extends Demo {
         for(MeshTriangleSelector selector : selectors) {
             selector.render(projection, view);
         }
-        cube.model.identity().translate(target).rotate(radians1, 0, 1, 0).rotate(radians2, 0, 0, 1);
+        cube.setTransform(target.x, target.y, target.z, 0, degrees1, degrees2, 1);
         cube.render(projection, view);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         pushInfo(app, collider);

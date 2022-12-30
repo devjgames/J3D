@@ -178,4 +178,12 @@ public class Utils {
         r.cross(offset, up).mulDirection(m).normalize();
         offset.mulDirection(m);
     }
+
+    public static float toRadians(float degrees) {
+        return degrees * (float)Math.PI / 180;
+    }
+
+    public static float toDegrees(float radians) {
+        return radians * 180 / (float)Math.PI;
+    }
 }
