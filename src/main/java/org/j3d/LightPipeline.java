@@ -19,7 +19,7 @@ public class LightPipeline extends Resource implements Asset {
     public static final int MAX_LIGHTS = 6;
     
     public static class Light {
-        public final Vector3f vector = new Vector3f(0, -1, -0);
+        public final Vector3f vector = new Vector3f(0, -1, 0);
         public final Vector4f color = new Vector4f(1, 1, 1, 1);
         public float radius = 200;
         public boolean directional = true;
