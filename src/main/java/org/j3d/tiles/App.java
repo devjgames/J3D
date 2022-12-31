@@ -131,15 +131,22 @@ public class App {
             target.add(offset, eye);
             view.identity().lookAt(eye, target, up);
             tiles.render(projection, view);
-            ball.render(projection, view);
             if(mode == 3) {
                 marker.getSelector().render(projection, view);
             }
+            ball.lights.clear();;
+            ball.ambientColor.set(1, 0, 1, 1);
+            ball.render(projection, view);
         }
         boolean handled = handleUI();
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         game.getSpritePipeline().beginSprite(font);
-        game.getSpritePipeline().push(font, "FPS=" + game.getFPS() + ", RES=" + Resource.getInstances(), 5, 10, h - font.getCharHeight() - 10, 1, 1, 1, 1);
+        game.getSpritePipeline().push(
+            font, 
+            "FPS=" + game.getFPS() + ", RES=" + Resource.getInstances(), 
+            5, 10, h - font.getCharHeight() - 10, 
+            1, 1, 1, 1
+            );
         game.getSpritePipeline().endSprite();
         game.getSpritePipeline().end();
         game.nextFrame();
@@ -173,7 +180,11 @@ public class App {
             if(manager.label("App-play-label", 5, "Play", 0, false)) {
                 game.getAssets().clear();
                 playing = true;
-                player.init(this, tileFile);
+                if(lit) {
+                    player.init(this, tileFile, lights);
+                } else {
+                    player.init(this, tileFile);
+                }
             }
             if(manager.label("App-tiles-label", 5, "Tiles", 0, showFactoryList)) {
                 showFactoryList = !showFactoryList;
@@ -233,9 +244,7 @@ public class App {
         showTileList = false;
         showFactoryList = false;
         ball = game.getAssets().load(IO.file("assets/meshes/ball.obj"));
-        ball.setTransform(tiles.playerCol * 64, tiles.playerLayer * 64 + 64 + 16, tiles.playerRow * 16, 0, 0, 0, 1);
-        ball.ambientColor.set(1, 0, 1, 1);
-        ball.diffuseColor.set(0, 0, 0, 1);
+        ball.setTransform(tiles.playerCol * 64, tiles.playerLayer * 64 + 64 + 16, tiles.playerRow * 16, 0, 0, 0, 1.5f);
     }
 
     private void handleMouse() throws Exception {
@@ -341,11 +350,11 @@ public class App {
         new App(
             new PlayerDemo()
         ).run(
-            new Tile("ledge1", IO.file("assets/meshes/ledge.obj"), IO.file("assets/meshes/ledge1.png")),
-            new Tile("ledge-side1", IO.file("assets/meshes/ledge-side.obj"), IO.file("assets/meshes/ledge1.png")),
-            new Tile("block1", IO.file("assets/meshes/block.obj"), IO.file("assets/meshes/stone1.png")),
-            new Tile("ramp1", IO.file("assets/meshes/ramp.obj"), IO.file("assets/meshes/stone1.png")),
-            new Tile("tree1", IO.file("assets/meshes/tree.obj"), IO.file("assets/meshes/tree1.png"))
+            new Tile("ledge1", "ledge.obj", "ledge1.png"),
+            new Tile("ledge-side1", "ledge-side.obj", "ledge1.png"),
+            new Tile("block1", "block.obj", "stone1.png"),
+            new Tile("ramp1", "ramp.obj", "stone1.png"),
+            new Tile("tree1", "tree.obj", "tree1.png")
         );
     }
 }

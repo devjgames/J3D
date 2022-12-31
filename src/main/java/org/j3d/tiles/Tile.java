@@ -3,6 +3,7 @@ package org.j3d.tiles;
 import java.io.File;
 
 import org.j3d.Game;
+import org.j3d.IO;
 import org.j3d.MeshTriangleSelector;
 import org.j3d.LightPipeline.Light;
 
@@ -19,10 +20,10 @@ public class Tile {
     private int rotationDegrees = 0;
     private MeshTriangleSelector selector = null;
 
-    public Tile(String name, File mesh, File texture) throws Exception {
+    public Tile(String name, String mesh, String texture) throws Exception {
         this.name = name;
-        this.mesh = mesh;
-        this.texture = texture;
+        this.mesh = IO.file(IO.file("assets/meshes"), mesh);
+        this.texture = IO.file(IO.file("assets/meshes"), texture);
     }
 
     public String getKey() {
@@ -58,8 +59,8 @@ public class Tile {
             selector.mesh.ambientColor.set(1, 1, 1, 1);
             selector.mesh.diffuseColor.set(0, 0, 0, 1);
         } else {
-            selector.mesh.ambientColor.set(0.2f, 0.2f, 0.2f, 1);
-            selector.mesh.diffuseColor.set(0.8f, 0.8f, 0.8f, 1);
+            selector.mesh.ambientColor.set(0.5f, 0.5f, 0.5f, 1);
+            selector.mesh.diffuseColor.set(1.0f, 1.0f, 1.0f, 1);
             selector.mesh.lights.clear();;
             for(Light light : lights) {
                 selector.mesh.lights.add(light);
@@ -76,7 +77,7 @@ public class Tile {
     }
 
     public Tile newInstance(App app) throws Exception {
-        Tile tile = new Tile(name, mesh, texture);
+        Tile tile = new Tile(name, mesh.getName(), texture.getName());
         Game game = app.getGame();
 
         tile.selector = new MeshTriangleSelector(game.getAssets().load(mesh));

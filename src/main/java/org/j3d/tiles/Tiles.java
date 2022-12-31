@@ -42,8 +42,8 @@ public class Tiles implements TriangleSelector {
             } else if(tLine.startsWith("tile ")) {
                 Tile tile = new Tile(
                     tokens[1],
-                    IO.file(tokens[2]), 
-                    IO.file(tokens[3])
+                    tokens[2], 
+                    tokens[3]
                     );
                 tile = tile.newInstance(app);
                 tile.setLoctation(
@@ -95,8 +95,8 @@ public class Tiles implements TriangleSelector {
             b.append(
                 "tile " + 
                 tile.name + " " + 
-                tile.mesh + " " + 
-                tile.texture + " " + 
+                tile.mesh.getName() + " " + 
+                tile.texture.getName() + " " + 
                 tile.getRow() + " " + 
                 tile.getCol() + " " + 
                 tile.getLayer() + " " + 
@@ -177,6 +177,6 @@ public class Tiles implements TriangleSelector {
     private void calcCell() {
         row = (int)(Math.floor(position.z / 64));
         col = (int)(Math.floor(position.x / 64));
-        layer = (int)(Math.floor(layer / 64));
+        layer = (int)(Math.floor(position.y / 64));
     }
 }
