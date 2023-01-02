@@ -1,6 +1,7 @@
 package org.j3d;
 
 import java.io.File;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import org.joml.Vector2f;
@@ -16,12 +17,41 @@ public class MeshLoader implements AssetLoader {
         Vector<Vector2f> tList = new Vector<>(1000);
         Vector<Vector3f> nList = new Vector<>(1000);
         int vCount = 0;
+        Hashtable<String, Vector3f> colors = new Hashtable<>();
+        Vector3f color = new Vector3f(1, 1, 1);
 
         for(String line : lines) {
             String tLine = line.trim();
             String[] tokens = tLine.split("\\s+");
 
-            if(tLine.startsWith("v ")) {
+            if(tLine.startsWith("mtllib ")) {
+                File mtlFile = IO.file(file.getParentFile(), tLine.substring(6).trim());
+
+                if(mtlFile.exists()) {
+                    String[] mtlLines = new String(IO.readAllBytes(mtlFile)).split("\\n+");
+                    String name = null;
+
+                    for(String mtlLine : mtlLines) {
+                        String tmtlLine = mtlLine.trim();
+
+                        if(tmtlLine.startsWith("newmtl ")) {
+                            name = tmtlLine.substring(6).trim();
+                        } else if(tmtlLine.startsWith("Kd ")) {
+                            colors.put(name, Parser.parse(tmtlLine.split("\\s+"), 1, new Vector3f(1, 1, 1)));
+                        }
+                    }
+                }
+            } else if(tLine.startsWith("usemtl ")) {
+                String key = tLine.substring(6).trim();
+
+
+                if(colors.containsKey(key)) {
+                    color = colors.get(key);
+                    mesh.vertexColorEnabled = true;
+
+                    Log.log(1, "setting obj mesh vertex color enabled = true");
+                }
+            } else if(tLine.startsWith("v ")) {
                 vList.add(Parser.parse(tokens, 1, new Vector3f()));
             } else if(tLine.startsWith("vt ")) {
                 tList.add(Parser.parse(tokens, 1, new Vector2f()));
@@ -40,7 +70,7 @@ public class MeshLoader implements AssetLoader {
                     Vector2f t = tList.get(tI);
                     Vector3f n = nList.get(nI);
 
-                    mesh.pushVertex(v.x, v.y, v.z, t.x, t.y, n.x, n.y, n.z);
+                    mesh.pushVertex(v.x, v.y, v.z, t.x, t.y, n.x, n.y, n.z, color.x, color.y, color.z);
 
                     indices[i - 1] = vCount++;
                 }

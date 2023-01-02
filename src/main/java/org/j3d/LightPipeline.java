@@ -29,8 +29,11 @@ public class LightPipeline extends Resource implements Asset {
     public final Vector4f ambientColor = new Vector4f(0.2f, 0.2f, 0.2f, 1);
     public final Vector4f diffuseColor = new Vector4f(0.8f, 0.8f, 0.8f, 1);
     public Texture texture = null;
+    public Texture decal = null;
     public int triangleTag = 1;
     public final Matrix4f model = new Matrix4f();
+    public boolean vertexColorEnabled = false;
+    public float ambientFactor = 0.5f;
 
     private final File file;
     private final Pipeline pipeline;
@@ -41,10 +44,12 @@ public class LightPipeline extends Resource implements Asset {
     private final int[] uLightDirectional = new int[MAX_LIGHTS];
     private final int uLightCount;
     private final int uAmbientColor, uDiffuseColor;
+    private final int uVertexColorEnabled, uAmbientFactor;
     private final int uTexture, uTextureEnabled;
+    private final int uDecal, uDecalEnabled;
     private final int vao, vbo, veo;
     private final Matrix4f matrix = new Matrix4f();
-    private FloatBuffer vBuf = BufferUtils.createFloatBuffer(8 * 4 * 6);
+    private FloatBuffer vBuf = BufferUtils.createFloatBuffer(11 * 4 * 6);
     private IntBuffer iBuf = BufferUtils.createIntBuffer(6 * 6);
     private final BoundingBox bounds = new BoundingBox();
     private final Triangle triangle = new Triangle();
@@ -70,8 +75,12 @@ public class LightPipeline extends Resource implements Asset {
         uLightCount = pipeline.getUniformLocation("uLightCount");
         uAmbientColor = pipeline.getUniformLocation("uAmbientColor");
         uDiffuseColor = pipeline.getUniformLocation("uDiffuseColor");
+        uVertexColorEnabled = pipeline.getUniformLocation("uVertexColorEnabled");
+        uAmbientFactor = pipeline.getUniformLocation("uAmbientFactor");
         uTexture = pipeline.getUniformLocation("uTexture");
         uTextureEnabled = pipeline.getUniformLocation("uTextureEnabled");
+        uDecal = pipeline.getUniformLocation("uDecal");
+        uDecalEnabled = pipeline.getUniformLocation("uDecalEnabled");
         vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
         veo = GL15.glGenBuffers();
@@ -115,8 +124,8 @@ public class LightPipeline extends Resource implements Asset {
         return bounds;
     }
 
-    public void pushVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
-        vBuf = Utils.ensureCapacity(vBuf, 1000 * 8 * 4);
+    public void pushVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float r, float g, float b) {
+        vBuf = Utils.ensureCapacity(vBuf, 1000 * 11 * 4);
         vBuf.put(x);
         vBuf.put(y);
         vBuf.put(z);
@@ -125,6 +134,9 @@ public class LightPipeline extends Resource implements Asset {
         vBuf.put(nx);
         vBuf.put(ny);
         vBuf.put(nz);
+        vBuf.put(r);
+        vBuf.put(g);
+        vBuf.put(b);
 
         bounds.add(x, y, z);
     }
@@ -162,9 +174,11 @@ public class LightPipeline extends Resource implements Asset {
         GL20.glEnableVertexAttribArray(0);
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 8 * 4, 0);
-        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 8 * 4, 3 * 4);
-        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 8 * 4, 5 * 4);
+        GL20.glEnableVertexAttribArray(3);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 11 * 4, 0);
+        GL20.glVertexAttribPointer(1, 2, GL11.GL_FLOAT, false, 11 * 4, 3 * 4);
+        GL20.glVertexAttribPointer(2, 3, GL11.GL_FLOAT, false, 11 * 4, 5 * 4);
+        GL20.glVertexAttribPointer(3, 3, GL11.GL_FLOAT, false, 11 * 4, 8 * 4);
         pipeline.set(uProjection, projection);
         pipeline.set(uView, view);
         pipeline.set(uModel, model);
@@ -180,9 +194,15 @@ public class LightPipeline extends Resource implements Asset {
         }
         pipeline.set(uAmbientColor, ambientColor);
         pipeline.set(uDiffuseColor, diffuseColor);
+        pipeline.set(uVertexColorEnabled, vertexColorEnabled);
+        pipeline.set(uAmbientFactor, ambientFactor);
         pipeline.set(uTextureEnabled, texture != null);
         if(texture != null) {
             pipeline.set(uTexture, 0, texture);
+        }
+        pipeline.set(uDecalEnabled, decal != null);
+        if(decal != null) {
+            pipeline.set(uDecal, 1, decal);
         }
         GL11.glDrawElements(GL11.GL_TRIANGLES, iBuf.limit(), GL11.GL_UNSIGNED_INT, 0);
         pipeline.end();
@@ -191,6 +211,27 @@ public class LightPipeline extends Resource implements Asset {
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
+    public void zeroCenter() {
+        Vector3f center = new Vector3f();
+
+        bounds.max.add(bounds.min, center).mul(0.5f);
+        for(int i = 0; i != vBuf.limit(); i += 11) {
+            float x = vBuf.get(i + 0);
+            float z = vBuf.get(i + 2);
+
+            x -= center.x;
+            z -= center.z;
+
+            vBuf.put(i + 0, x);
+            vBuf.put(i + 2, z);
+        }
+        bounds.max.sub(center);
+        bounds.min.sub(center);
+
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vBuf, GL15.GL_STATIC_DRAW);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+    }
 
     @Override
     public void destroy() throws Exception {
@@ -206,9 +247,9 @@ public class LightPipeline extends Resource implements Asset {
         int i2 = iBuf.get(i++);
         int i3 = iBuf.get(i++);
         
-        triangle.p1.set(vBuf.get(i1 * 8 + 0), vBuf.get(i1 * 8 + 1), vBuf.get(i1 * 8 + 2));
-        triangle.p2.set(vBuf.get(i2 * 8 + 0), vBuf.get(i2 * 8 + 1), vBuf.get(i2 * 8 + 2));
-        triangle.p3.set(vBuf.get(i3 * 8 + 0), vBuf.get(i3 * 8 + 1), vBuf.get(i3 * 8 + 2));
+        triangle.p1.set(vBuf.get(i1 * 11 + 0), vBuf.get(i1 * 11 + 1), vBuf.get(i1 * 11 + 2));
+        triangle.p2.set(vBuf.get(i2 * 11 + 0), vBuf.get(i2 * 11 + 1), vBuf.get(i2 * 11 + 2));
+        triangle.p3.set(vBuf.get(i3 * 11 + 0), vBuf.get(i3 * 11 + 1), vBuf.get(i3 * 11 + 2));
         triangle.calcPlane();
         triangle.tag = triangleTag;
         triangle.transform(model);

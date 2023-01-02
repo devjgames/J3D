@@ -33,7 +33,7 @@ public class App {
 
     public void run(Demo ... list) throws Exception {
         try {
-            game = new Game(1000, 800, true);
+            game = new Game(1000, 800, 0, false);
             font = game.getResources().manage(new Font(IO.file("assets/pics/font.fnt")));
             manager = new UIManager(game, font);
             GLFW.glfwSwapInterval(1);
@@ -49,7 +49,6 @@ public class App {
                 if(demo != null) {
                     if(skip > 0) {
                         skip--;
-                        game.beginRenderTarget();
                         Utils.clear(0, 0, 0, 1);
                         game.nextFrame();
                     } else {
@@ -57,11 +56,11 @@ public class App {
                             game.getAssets().clear();
                             demo = null;
                             select = -1;
+                            game.disableFPSMouse();
                         }
                     }
                 } else {
                     Object r;
-                    game.beginRenderTarget();
                     manager.begin();
                     Utils.clear(0, 0, 0, 1);
                     manager.moveTo(10, 10);
@@ -96,11 +95,11 @@ public class App {
     }
 
     public static void main(String[] args) throws Exception {
+        Tiles.addTileFactories("colors");
+        
         new App().run(
-            new Mesh1Demo(),
-            new Mesh2Demo(),
-            new Mesh3Demo(),
-            new TD1Demo()
+            new TileEditor(),
+            new Scene("scene1")
         );
     }
 }

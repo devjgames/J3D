@@ -12,6 +12,8 @@ public class AssetManager extends Resource {
 
     public AssetManager() {
         registerAssetLoader(".png", new TextureLoader());
+        registerAssetLoader(".jpeg", new TextureLoader());
+        registerAssetLoader(".jpg", new TextureLoader());
         registerAssetLoader(".wav", new SoundLoader());
         registerAssetLoader(".fnt", new FontLoader());
         registerAssetLoader(".obj", new MeshLoader());

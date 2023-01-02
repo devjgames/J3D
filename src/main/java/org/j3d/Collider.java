@@ -10,8 +10,8 @@ public class Collider {
     public static interface TriangleSelector {
         boolean getEnabled();
         void setEnabled(boolean enabled);
-        boolean intersect(Collider collider);
-        boolean resolve(Collider collider);
+        boolean intersect(Collider collider) throws Exception;
+        boolean resolve(Collider collider) throws Exception;
     }
     
     public static interface ContactListener {
@@ -23,7 +23,7 @@ public class Collider {
     public final Vector3f direction = new Vector3f();
     public final float[] time = new float[] { 0 };
     public float gravity = 2000;
-    public float groundSlope = 60;
+    public float groundSlope = 45;
     public float roofSlope = 45;
     public float speed = 125;
     public float radius = 16;
@@ -92,7 +92,7 @@ public class Collider {
         return false;
     }
 
-    public TriangleSelector intersect() {
+    public TriangleSelector intersect() throws Exception {
         TriangleSelector hit = null;
 
         for(TriangleSelector selector : selectors) {

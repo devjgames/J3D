@@ -11,6 +11,7 @@ import org.lwjgl.openal.ALC10;
 import org.lwjgl.openal.ALCCapabilities;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
 public class Game {
 
@@ -19,7 +20,6 @@ public class Game {
     private final ResourceManager resources;
     private final AssetManager assets;
     private final SpritePipeline spritePipeline;
-    private RenderTarget renderTarget = null;
     private float lastTime;
     private float elapsedTime;
     private float totalTime;
@@ -45,7 +45,7 @@ public class Game {
     private int[] sh = new int[1];
     private boolean fpsMouseEnabled = false;
 
-    public Game(int width, int height, boolean resizable) throws Exception {
+    public Game(int width, int height, int samples, boolean resizable) throws Exception {
 
         device = ALC10.alcOpenDevice((ByteBuffer) null);
         ALCCapabilities caps = ALC.createCapabilities(device);
@@ -65,6 +65,10 @@ public class Game {
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 
+        if(samples > 1) {
+            GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, samples);
+        }
+
         window = GLFW.glfwCreateWindow(width, height, "jgame", 0, 0);
         if (window == 0) {
             GLFW.glfwTerminate();
@@ -74,6 +78,10 @@ public class Game {
         GLFW.glfwMakeContextCurrent(window);
         GL.createCapabilities();
         GLFW.glfwSwapInterval(0);
+
+        if(samples > 1) {
+            GL11.glEnable(GL13.GL_MULTISAMPLE);
+        }
 
         resources = new ResourceManager();
 
@@ -155,16 +163,10 @@ public class Game {
     }
 
     public int getRenderTargetWidth() {
-        if(renderTarget != null) {
-            return renderTarget.getTexture(0).width;
-        }
         return getWidth();
     }
 
     public int getRenderTargetHeight() {
-        if(renderTarget != null) {
-            return renderTarget.getTexture(0).height;
-        }
         return getHeight();
     }
 
@@ -178,18 +180,14 @@ public class Game {
         return wh[0];
     }
 
-    private int getFramebufferWidth() {
+    public int getFramebufferWidth() {
         GLFW.glfwGetFramebufferSize(window, fw, fh);
         return fw[0];
     }
 
-    private int getFramebufferHeight() {
+    public int getFramebufferHeight() {
         GLFW.glfwGetFramebufferSize(window, fw, fh);
         return fh[0];
-    }
-
-    private int getFramebufferScale() {
-        return getFramebufferWidth() / getWidth();
     }
 
     public float getAspectRatio() {
@@ -241,40 +239,7 @@ public class Game {
         return false;
     }
 
-    public void beginRenderTarget() throws Exception {
-        if(getFramebufferScale() > 1) {
-            int w = getFramebufferWidth() / getFramebufferScale();
-            int h = getFramebufferHeight() / getFramebufferScale();
-    
-            if(renderTarget != null) {
-                if(w > 1 && h > 1 && (w != renderTarget.getTexture(0).width || h != renderTarget.getTexture(0).height)) {
-                    Log.log(1, "creating render target -> " + w + " x " + h + ", scale -> " + getFramebufferScale() + " ...");
-                    resources.unManage(renderTarget);
-                    renderTarget = resources.manage(new RenderTarget(w, h, PixelFormat.COLOR));
-                }
-            } else {
-                Log.log(1, "creating render target -> " + w + " x " + h + ", scale -> " + getFramebufferScale() + " ...");
-                renderTarget = resources.manage(new RenderTarget(w, h, PixelFormat.COLOR));
-            }
-            renderTarget.begin();
-        }
-    }
-
     public void nextFrame() {
-        if(getFramebufferScale() > 1) {
-            int w = getFramebufferWidth();
-            int h = getFramebufferHeight();
-            Texture texture = renderTarget.getTexture(0);
-        
-            renderTarget.end();
-            Utils.clear(0, 0, 0, 1);
-            getSpritePipeline().begin(w, h);
-            spritePipeline.beginSprite(texture);
-            spritePipeline.push(0, 0, texture.width, texture.height, 0, 0, getFramebufferWidth(), getFramebufferHeight(), 1, 1, 1, 1, true);
-            spritePipeline.endSprite();
-            getSpritePipeline().end();
-          }
-
         Utils.checkError("nextFrame()");
         GLFW.glfwSwapBuffers(window);
 

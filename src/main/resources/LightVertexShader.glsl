@@ -3,10 +3,12 @@
 in vec3 vsInPosition;
 in vec2 vsInTextureCoordinate;
 in vec3 vsInNormal;
+in vec3 vsInColor;
 
 out vec3 fsInPosition;
 out vec2 fsInTextureCoordinate;
 out vec3 fsInNormal;
+out vec3 fsInColor;
 
 uniform mat4 uProjection;
 uniform mat4 uView;
@@ -19,4 +21,5 @@ void main() {
     fsInPosition = (uModel * vec4(vsInPosition, 1.0)).xyz;
     fsInTextureCoordinate = vsInTextureCoordinate;
     fsInNormal = normalize((uModelIT * vec4(vsInNormal, 0.0)).xyz);
+    fsInColor = vsInColor;
 }

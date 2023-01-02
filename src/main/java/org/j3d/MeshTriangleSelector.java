@@ -73,6 +73,8 @@ public class MeshTriangleSelector implements TriangleSelector {
         bounds.min.set(mesh.getBounds().min);
         bounds.max.set(mesh.getBounds().max);
         bounds.transform(model);
+        bounds.min.sub(1, 1, 1);
+        bounds.max.add(1, 1, 1);
 
         if(bounds.touches(collider.resolveBounds)) {
             for(int i = 0; i != mesh.getTriangleCount(); i++) {
