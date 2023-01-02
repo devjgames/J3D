@@ -13,7 +13,6 @@ public class Tile {
     
     public final String name;
     public final File meshFile;
-    public final File textureFile;
     public boolean visible = true;
 
     private int row = 0;
@@ -22,12 +21,11 @@ public class Tile {
     private MeshTriangleSelector selector = null;
     private int rotation = 0;
 
-    public Tile(String name, String textureName, int layer) {
+    public Tile(String name, int layer) {
         File directory = IO.file("assets/meshes");
         
         this.name = name;
         this.meshFile = IO.file(directory, name + ".obj");
-        this.textureFile = IO.file(directory, textureName + ".png");
 
         this.layer = layer;
     }
@@ -44,7 +42,7 @@ public class Tile {
         return col;
     }
 
-    public int getlayer() {
+    public int getLayer() {
         return layer;
     }
 
@@ -57,7 +55,14 @@ public class Tile {
             Log.log(3, "creating selector for tile - " + this);
             selector = new MeshTriangleSelector(game.getAssets().load(meshFile));
             selector.mesh.zeroCenter();
-            selector.mesh.texture = game.getAssets().load(textureFile);
+            selector.mesh.texture = game.getAssets().load(Tiles.getTextureFile());
+
+            File file = Tiles.getDecalFile();
+
+            if(file.exists()) {
+                selector.mesh.decal = game.getAssets().load(file);
+            }
+
         }
         return selector;
     }
@@ -70,7 +75,7 @@ public class Tile {
     }
 
     public Tile newInstance() {
-        return new Tile(name, IO.fileNameWithOutExtension(textureFile), layer);
+        return new Tile(name, layer);
     }
 
     public static String keyFor(int row, int col, int layer) {

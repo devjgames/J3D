@@ -32,7 +32,7 @@ public class Tiles implements TriangleSelector {
 
                     Log.log(1, "adding tile factory '" + name + "' ...");
 
-                    factories.add(new Tile(name, textureName, name.endsWith("_1") ? 1 : 0));
+                    factories.add(new Tile(name, name.endsWith("_1") ? 1 : 0));
                 }
             }
             Tiles.textureName = textureName;
@@ -41,6 +41,10 @@ public class Tiles implements TriangleSelector {
 
     public static File getTextureFile() {
         return IO.file(IO.file("assets/meshes"), textureName + ".png");
+    }
+
+    public static File getDecalFile() {
+        return IO.file(IO.file("assets/meshes"), textureName + "-decal.png");
     }
 
     public static int getTileFactoryCount() {
@@ -85,12 +89,15 @@ public class Tiles implements TriangleSelector {
                 light.radius = Parser.parse(tokens, 9, 50.0f);
                 lights.add(light);
             } else if(tLine.startsWith("tile ")) {
-                Tile tile = new Tile(tokens[1], tokens[2], Parser.parse(tokens, 3, 0));
-                int row = Parser.parse(tokens, 4, 0);
-                int col = Parser.parse(tokens, 5, 0);
-                int rotation = Parser.parse(tokens, 6, 0);
+                Tile tile = new Tile(tokens[1], Parser.parse(tokens, 2, 0));
+                int row = Parser.parse(tokens, 3, 0);
+                int col = Parser.parse(tokens, 4, 0);
+                int rotation = Parser.parse(tokens, 5, 0);
 
                 tile.setTransform(game, row, col, rotation);
+                if(tile.name.startsWith("t_")) {
+                    tile.getSelector(game).setEnabled(false);
+                }
 
                 add(tile);
             }
@@ -169,8 +176,7 @@ public class Tiles implements TriangleSelector {
             b.append(
                 "tile " + 
                 tile.name + " " + 
-                IO.fileNameWithOutExtension(tile.textureFile) + " " + 
-                tile.getlayer() + " " + 
+                tile.getLayer() + " " + 
                 tile.getRow() +  " " + 
                 tile.getCol() + " " + 
                 tile.getRotation() + "\n"

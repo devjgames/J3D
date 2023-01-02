@@ -59,10 +59,10 @@ public class Scene extends Demo {
     public boolean run(App app) throws Exception {
         Game game = app.getGame();
         float side = 190;
-        float miny = 190;
-        float maxy = 105;
+        float minz = 190;
+        float maxz = 105;
         float x = Math.min(Math.max(tiles.position.x, bounds.min.x + side), bounds.max.x - side);
-        float z = Math.min(Math.max(tiles.position.z, bounds.min.z + miny), bounds.max.z - maxy);
+        float z = Math.min(Math.max(tiles.position.z, bounds.min.z + minz), bounds.max.z - maxz);
 
         projection.identity().perspective(Utils.toRadians(60), game.getAspectRatio(), 1, 10000);
         target.set(x, 0, z);

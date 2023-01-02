@@ -118,14 +118,10 @@ public class TileEditor extends Demo {
                 float pz = origin.z + t * direction.z;
                 int row = Tiles.calcIndex(pz);
                 int col = Tiles.calcIndex(px);
-                Tile eTile1 = tiles.find(row, col, 0);
-                Tile eTile2 = tiles.find(row, col, 1);
+                Tile eTile = tiles.find(row, col, tile.getLayer());
 
-                if(eTile1 != null) {
-                    eTile1.visible = false;
-                }
-                if(eTile2 != null) {
-                    eTile2.visible = false;
+                if(eTile != null) {
+                    eTile.visible = false;
                 }
                 tile.setTransform(game, row, col, rotation);
 
@@ -135,11 +131,8 @@ public class TileEditor extends Demo {
 
                 tiles.render(projection, view, tile);
 
-                if(eTile1 != null) {
-                    eTile1.visible = true;
-                }
-                if(eTile2 != null) {
-                    eTile2.visible = true;
+                if(eTile != null) {
+                    eTile.visible = true;
                 }
             } else {
                 tiles.render(projection, view, null);

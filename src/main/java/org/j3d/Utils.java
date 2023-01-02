@@ -18,7 +18,7 @@ public class Utils {
             int error = GL11.glGetError();
             if (error != GL11.GL_NO_ERROR) {
                 hasError = true;
-                System.out.println(tag + ":" + error);
+                Log.log(0, tag + ":" + error);
             }
         }
     }
