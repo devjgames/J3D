@@ -68,7 +68,7 @@ public class Tile {
     }
 
     public void setTransform(Game game, int row, int col, int rotation) throws Exception {
-        getSelector(game).setTransform(col * SIZE, 0, row * SIZE, 0, rotation, 0, 16);
+        getSelector(game).setTransform(col * SIZE, 0, row * SIZE, 0, rotation, 0, SIZE / 2);
         this.rotation = rotation;
         this.row = row;
         this.col = col;

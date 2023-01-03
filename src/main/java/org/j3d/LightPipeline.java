@@ -164,7 +164,7 @@ public class LightPipeline extends Resource implements Asset {
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    public void render(Matrix4f projection, Matrix4f view) {
+    public void begin(Matrix4f projection, Matrix4f view) {
         int count = Math.min(MAX_LIGHTS, lights.size());
 
         pipeline.begin();
@@ -181,8 +181,6 @@ public class LightPipeline extends Resource implements Asset {
         GL20.glVertexAttribPointer(3, 3, GL11.GL_FLOAT, false, 11 * 4, 8 * 4);
         pipeline.set(uProjection, projection);
         pipeline.set(uView, view);
-        pipeline.set(uModel, model);
-        pipeline.set(uModelIT, matrix.set(model).invert().transpose());
         pipeline.set(uLightCount, count);
         for(int i = 0; i != count; i++) {
             Light light = lights.get(i);
@@ -204,11 +202,26 @@ public class LightPipeline extends Resource implements Asset {
         if(decal != null) {
             pipeline.set(uDecal, 1, decal);
         }
+    }
+
+    public void render() {
+        pipeline.set(uModel, model);
+        pipeline.set(uModelIT, matrix.set(model).invert().transpose());
         GL11.glDrawElements(GL11.GL_TRIANGLES, iBuf.limit(), GL11.GL_UNSIGNED_INT, 0);
+
+    }
+
+    public void end() {
         pipeline.end();
         GL30.glBindVertexArray(0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    public void render(Matrix4f projection, Matrix4f view) {
+        begin(projection, view);
+        render();
+        end();
     }
 
     public void zeroCenter() {

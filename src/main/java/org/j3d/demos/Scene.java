@@ -18,6 +18,7 @@ public class Scene extends Demo {
     private Vector3f up = new Vector3f(0, 1, 0);
     private Vector3f eye = new Vector3f();
     private Vector3f position = new Vector3f();
+    private Vector3f startPosition = new Vector3f();
     private Collider collider;
     private LightPipeline cube;
     private Tiles tiles;
@@ -53,6 +54,8 @@ public class Scene extends Demo {
             tBounds.transform(tile.getSelector(game).model);
             bounds.add(tBounds);
         }
+
+        startPosition.set(tiles.position);
     }
 
     @Override
@@ -74,7 +77,7 @@ public class Scene extends Demo {
         cube.setTransform(tiles.position.x, tiles.position.y, tiles.position.z, 0, degrees1, degrees2, 16);
         cube.render(projection, view);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
-        pushInfo(app, collider);
+        pushInfo(app, tiles, collider);
         game.getSpritePipeline().end();
         game.nextFrame();
 
@@ -105,7 +108,14 @@ public class Scene extends Demo {
         collider.collide(game, position);
         tiles.position.set(position);
 
+        if(tiles.position.y < -100) {
+            tiles.position.set(startPosition);
+        }
         return !game.isKeyDown(GLFW.GLFW_KEY_ESCAPE);
     } 
     
+    @Override
+    public String toString() {
+        return IO.fileNameWithOutExtension(file);
+    }
 }

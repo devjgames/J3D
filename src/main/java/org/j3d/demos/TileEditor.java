@@ -193,7 +193,7 @@ public class TileEditor extends Demo {
         }
         boolean handled = manager.end();
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
-        pushInfo(app, null);
+        pushInfo(app, tiles, null);
         game.getSpritePipeline().end();
         game.nextFrame();
         

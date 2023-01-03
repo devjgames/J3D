@@ -15,13 +15,17 @@ public abstract class Demo {
 
     public abstract boolean run(App app) throws Exception;
 
-    public void pushInfo(App app, Collider collider) {
+    public void pushInfo(App app, Tiles tiles, Collider collider) {
         Game game = app.getGame();
         Font font = app.getFont();
 
         String info = "FPS=" + game.getFPS() + ", ";
 
         info += "RES=" + Resource.getInstances() + ", ";
+        if(tiles != null) {
+            info += "RND=" + tiles.getRendered() + ", ";
+            info += "BND=" + tiles.getBinds() + ", ";
+        }
         if(collider != null) {
             info += "TST=" + collider.getTested() + ", ";
         }

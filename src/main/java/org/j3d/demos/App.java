@@ -99,7 +99,8 @@ public class App {
         
         new App().run(
             new TileEditor(),
-            new Scene("scene1")
+            new Scene("scene1"),
+            new Scene("scene2")
         );
     }
 }

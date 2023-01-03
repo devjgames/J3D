@@ -16,9 +16,23 @@ public class MeshTriangleSelector implements TriangleSelector {
         this.mesh = mesh;
     }
 
-    public void render(Matrix4f projection, Matrix4f view) {
+    public void begin(Matrix4f projection, Matrix4f view) {
+        mesh.begin(projection, view);
+    }
+
+    public void render() {
         mesh.model.set(model);
-        mesh.render(projection, view);
+        mesh.render();
+    }
+
+    public void end() {
+        mesh.end();
+    }
+
+    public void render(Matrix4f projection, Matrix4f view) {
+        begin(projection, view);
+        render();
+        end();
     }
 
     public void setTransform(float x, float y, float z, float rx, float ry, float rz, float scale) {

@@ -6,13 +6,16 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import org.j3d.BoundingBox;
 import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.IO;
+import org.j3d.LightPipeline;
 import org.j3d.Log;
 import org.j3d.Parser;
 import org.j3d.Collider.TriangleSelector;
 import org.j3d.LightPipeline.Light;
+import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -63,7 +66,14 @@ public class Tiles implements TriangleSelector {
     public final Vector<Light> lights = new Vector<>();
     
     private Hashtable<String, Tile> tiles = new Hashtable<>();
+    private Vector<Tile> sortedTiles = new Vector<>();
+    private Vector<Light> sortedLights = new Vector<>();
     private boolean enabled = true;
+    private int binds = 0;
+    private int rendered = 0;
+    private FrustumIntersection frustum = new FrustumIntersection();
+    private Matrix4f matrix = new Matrix4f();
+    private BoundingBox bounds = new BoundingBox();
 
     public Tiles(Game game, File file) throws Exception {
         String[] lines = new String(IO.readAllBytes(file)).split("\\n+");
@@ -98,13 +108,20 @@ public class Tiles implements TriangleSelector {
                 if(tile.name.startsWith("t_")) {
                     tile.getSelector(game).setEnabled(false);
                 }
-
                 add(tile);
             }
         }
         playerRow = pr;
         playerCol = pc;
-        position.set(playerCol * Tile.SIZE, Tile.SIZE, playerRow * Tile.SIZE);
+        position.set(playerCol * Tile.SIZE, Tile.SIZE * 2, playerRow * Tile.SIZE);
+    }
+
+    public int getBinds() {
+        return binds;
+    }
+
+    public int getRendered() {
+        return rendered;
     }
 
     public Collection<Tile> getTiles() {
@@ -134,7 +151,17 @@ public class Tiles implements TriangleSelector {
     }
 
     public void render(Matrix4f projection, Matrix4f view, Tile cell) throws Exception {
-        lights.sort((a, b) -> {
+        frustum.set(matrix.set(projection).mul(view));
+
+        for(Light light : lights) {
+            bounds.min.set(light.vector).sub(light.radius, light.radius, light.radius);
+            bounds.max.set(light.vector).add(light.radius, light.radius, light.radius);
+            if(frustum.testAab(bounds.min, bounds.max)) {
+                sortedLights.add(light);
+            }
+        }
+
+        sortedLights.sort((a, b) -> {
             if(a == b) {
                 return 0;
             } else {
@@ -144,18 +171,62 @@ public class Tiles implements TriangleSelector {
                 return Float.compare(d1, d2);
             }
         });
+        sortedLights.setSize(Math.min(sortedLights.size(), LightPipeline.MAX_LIGHTS));
+
         for(Tile tile : tiles.values()) {
             if(tile.visible) {
-                tile.getSelector(game).mesh.lights.clear();
-                tile.getSelector(game).mesh.lights.addAll(lights);
-                tile.getSelector(game).render(projection, view);
+                bounds.min.set(tile.getSelector(game).mesh.getBounds().min);
+                bounds.max.set(tile.getSelector(game).mesh.getBounds().max);
+                bounds.transform(tile.getSelector(game).model);
+                if(frustum.testAab(bounds.min, bounds.max)) {
+                    sortedTiles.add(tile);
+                }
             }
         }
+        sortedTiles.sort((a, b) -> {
+            if(a == b) {
+                return 0;
+            } else {
+                return a.name.compareTo(b.name);
+            }
+        });
+
+        Tile last = null;
+
+        binds = 0;
+        rendered = 0;
+
+        for(Tile tile : sortedTiles) {
+            if(last == null) {
+                last = tile;
+                tile.getSelector(game).mesh.lights.clear();
+                tile.getSelector(game).mesh.lights.addAll(sortedLights);
+                tile.getSelector(game).begin(projection, view);
+                binds++;
+            } else if(!last.name.equals(tile.name)) {
+                last.getSelector(game).end();
+                last = tile;
+                tile.getSelector(game).mesh.lights.clear();
+                tile.getSelector(game).mesh.lights.addAll(sortedLights);
+                tile.getSelector(game).begin(projection, view);
+                binds++;
+            }
+            tile.getSelector(game).render();
+            rendered++;
+        }
+        if(last != null) {
+            last.getSelector(game).end();
+        }
+
         if(cell != null) {
             cell.getSelector(game).mesh.lights.clear();
-            cell.getSelector(game).mesh.lights.addAll(lights);
+            cell.getSelector(game).mesh.lights.addAll(sortedLights);
             cell.getSelector(game).render(projection, view);
+            binds++;
+            rendered++;
         }
+        sortedTiles.clear();
+        sortedLights.clear();
     }
 
     public void save() throws Exception {
