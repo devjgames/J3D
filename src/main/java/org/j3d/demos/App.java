@@ -77,6 +77,7 @@ public class App {
                     }
                     manager.addRow(5);
                     if((r = manager.list("App-demo-list", 0, demoNames, 20, 8, select)) != null) {
+                        Utils.clearConsole();
                         game.getAssets().clear();
                         demo = demos[(Integer)r];
                         demo.init(this);

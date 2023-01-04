@@ -6,6 +6,7 @@ import org.j3d.Game;
 import org.j3d.IO;
 import org.j3d.Log;
 import org.j3d.MeshTriangleSelector;
+import org.j3d.Utils;
 
 public class Tile {
 
@@ -52,7 +53,7 @@ public class Tile {
 
     public MeshTriangleSelector getSelector(Game game) throws Exception {
         if(selector == null) {
-            Log.log(3, "creating selector for tile - " + this);
+            Log.log(5, "creating selector for tile - " + this);
             selector = new MeshTriangleSelector(game.getAssets().load(meshFile));
             selector.mesh.zeroCenter();
             selector.mesh.texture = game.getAssets().load(Tiles.getTextureFile());
@@ -62,9 +63,13 @@ public class Tile {
             if(file.exists()) {
                 selector.mesh.decal = game.getAssets().load(file);
             }
-
+            Utils.allocate();
         }
         return selector;
+    }
+
+    public void reload() {
+        selector = null;
     }
 
     public void setTransform(Game game, int row, int col, int rotation) throws Exception {

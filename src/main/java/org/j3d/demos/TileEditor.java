@@ -42,6 +42,8 @@ public class TileEditor extends Demo {
     private boolean down = false;
     private boolean down2 =  false;
     private boolean resetLight = false;
+    private boolean black = false;
+    private boolean lit = true;
     private int rotation = 0;
     private Vector3f origin = new Vector3f();
     private Vector3f direction = new Vector3f();
@@ -81,6 +83,8 @@ public class TileEditor extends Demo {
         down = false;
         down2 = false;
         resetLight = false;
+        black = false;
+        lit = true;
 
         cube = game.getAssets().load(IO.file("assets/meshes/cube.obj"));
         cube.zeroCenter();
@@ -98,7 +102,11 @@ public class TileEditor extends Demo {
         target.add(offset, eye);
         view.identity().lookAt(eye, target, up);
 
-        Utils.clear(0, 0, 0, 1);
+        if(black) {
+            Utils.clear(0, 0, 0, 1);
+        } else {
+            Utils.clear(0.15f, 0.15f, 0.15f, 1);
+        }
         if(tiles != null) {
             if(mode == 2 || mode == 3) {
                 Tile tile = Tiles.getTileFactory(iFactory);
@@ -129,13 +137,13 @@ public class TileEditor extends Demo {
                     tile = null;
                 }
 
-                tiles.render(projection, view, tile);
+                tiles.render(projection, view, lit, tile);
 
                 if(eTile != null) {
                     eTile.visible = true;
                 }
             } else {
-                tiles.render(projection, view, null);
+                tiles.render(projection, view, lit, null);
             }
             cube.model
                 .identity()
@@ -165,6 +173,15 @@ public class TileEditor extends Demo {
                     mode = i;
                 }
             }
+            if(manager.label("TileEditor-black-label", 5, "Black", 0, black)) {
+                black = !black;
+            }
+            if(manager.label("TileEditor-lit-label", 5, "Lit", 0, lit)) {
+                lit = !lit;
+            }
+            if(manager.label("TileEditor-clear-console-label", 5, "CLR", 0, false)) {
+                Utils.clearConsole();
+            }
             if(showTiles) {
                 manager.addRow(5);
                 if((r = manager.list("TileEditor-tiles-list", 0, tileFactoryNames, 20, 8, factorySelection)) != null) {
@@ -185,7 +202,13 @@ public class TileEditor extends Demo {
         }
         if(showScenes) {
             manager.addRow(5);
-            if((r = manager.list("TileEditor-tiles-list", 0, tileSceneNames, 20, 8, sceneSelection)) != null) {
+            if((r = manager.list("TileEditor-scenes-list", 0, tileSceneNames, 20, 8, sceneSelection)) != null) {
+                game.getAssets().clear();
+                Utils.clearConsole();
+                cube = game.getAssets().load(IO.file("assets/meshes/cube.obj"));
+                cube.zeroCenter();
+                cube.ambientColor.set(1, 1, 1, 1);
+                cube.texture = game.getAssets().load(Tiles.getTextureFile());
                 tiles = new Tiles(game, IO.file(IO.file("assets/tiles"), tileSceneNames.get((Integer)r) + ".txt"));
                 showScenes = false;
             }

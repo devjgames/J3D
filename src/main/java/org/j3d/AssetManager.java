@@ -63,6 +63,8 @@ public class AssetManager extends Resource {
         }
         assets.clear();
         getResources().clear();
+
+        Utils.allocations = 0;
     }
 
     @Override

@@ -49,10 +49,12 @@ public class Scene extends Demo {
         degrees1 = degrees2 = 0;
 
         for(Tile tile : tiles.getTiles()) {
-            tBounds.min.set(tile.getSelector(game).mesh.getBounds().min);
-            tBounds.max.set(tile.getSelector(game).mesh.getBounds().max);
-            tBounds.transform(tile.getSelector(game).model);
-            bounds.add(tBounds);
+            if(!tile.name.contains("flat2")) {
+                tBounds.min.set(tile.getSelector(game).mesh.getBounds().min);
+                tBounds.max.set(tile.getSelector(game).mesh.getBounds().max);
+                tBounds.transform(tile.getSelector(game).model);
+                bounds.add(tBounds);
+            }
         }
 
         startPosition.set(tiles.position);
@@ -61,11 +63,17 @@ public class Scene extends Demo {
     @Override
     public boolean run(App app) throws Exception {
         Game game = app.getGame();
-        float side = 190;
-        float minz = 190;
-        float maxz = 105;
-        float x = Math.min(Math.max(tiles.position.x, bounds.min.x + side), bounds.max.x - side);
-        float z = Math.min(Math.max(tiles.position.z, bounds.min.z + minz), bounds.max.z - maxz);
+        float dx = 100;
+        float dz = 100;
+        float x = Math.min(Math.max(tiles.position.x, bounds.min.x + dx), bounds.max.x - dx);
+        float z = Math.min(Math.max(tiles.position.z, bounds.min.z + dz), bounds.max.z - dz);
+
+        if((bounds.max.x - dx) - (bounds.min.x + dx) < 0) {
+            x = startPosition.x;
+        }
+        if((bounds.max.z - dz) - (bounds.min.z + dz) < 0) {
+            z = startPosition.z;
+        }
 
         projection.identity().perspective(Utils.toRadians(60), game.getAspectRatio(), 1, 10000);
         target.set(x, 0, z);
@@ -73,7 +81,7 @@ public class Scene extends Demo {
         view.identity().lookAt(eye, target, up);
 
         Utils.clear(0, 0, 0, 1);
-        tiles.render(projection, view, null);
+        tiles.render(projection, view, true, null);
         cube.setTransform(tiles.position.x, tiles.position.y, tiles.position.z, 0, degrees1, degrees2, 16);
         cube.render(projection, view);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
@@ -108,7 +116,7 @@ public class Scene extends Demo {
         collider.collide(game, position);
         tiles.position.set(position);
 
-        if(tiles.position.y < -100) {
+        if(tiles.position.y < -16) {
             tiles.position.set(startPosition);
         }
         return !game.isKeyDown(GLFW.GLFW_KEY_ESCAPE);

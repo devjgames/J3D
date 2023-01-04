@@ -83,6 +83,10 @@ public class Tiles implements TriangleSelector {
         this.file = file;
         this.game = game;
 
+        for(Tile tile : factories) {
+            tile.reload();
+        }
+
         for(String line : lines) {
             String tLine = line.trim();
             String[] tokens = tLine.split("\\s+");
@@ -99,16 +103,21 @@ public class Tiles implements TriangleSelector {
                 light.radius = Parser.parse(tokens, 9, 50.0f);
                 lights.add(light);
             } else if(tLine.startsWith("tile ")) {
-                Tile tile = new Tile(tokens[1], Parser.parse(tokens, 2, 0));
-                int row = Parser.parse(tokens, 3, 0);
-                int col = Parser.parse(tokens, 4, 0);
-                int rotation = Parser.parse(tokens, 5, 0);
+                String name = tokens[1];
+                File meshFile = IO.file(IO.file("assets/meshes"), name + ".obj");
 
-                tile.setTransform(game, row, col, rotation);
-                if(tile.name.startsWith("t_")) {
-                    tile.getSelector(game).setEnabled(false);
+                if(meshFile.exists()) {
+                    Tile tile = new Tile(name, Parser.parse(tokens, 2, 0));
+                    int row = Parser.parse(tokens, 3, 0);
+                    int col = Parser.parse(tokens, 4, 0);
+                    int rotation = Parser.parse(tokens, 5, 0);
+
+                    tile.setTransform(game, row, col, rotation);
+                    if(tile.name.startsWith("t_")) {
+                        tile.getSelector(game).setEnabled(false);
+                    }
+                    add(tile);
                 }
-                add(tile);
             }
         }
         playerRow = pr;
@@ -150,28 +159,30 @@ public class Tiles implements TriangleSelector {
         tiles.put(tile.key(), tile);
     }
 
-    public void render(Matrix4f projection, Matrix4f view, Tile cell) throws Exception {
+    public void render(Matrix4f projection, Matrix4f view, boolean lightingEnabled, Tile cell) throws Exception {
         frustum.set(matrix.set(projection).mul(view));
 
-        for(Light light : lights) {
-            bounds.min.set(light.vector).sub(light.radius, light.radius, light.radius);
-            bounds.max.set(light.vector).add(light.radius, light.radius, light.radius);
-            if(frustum.testAab(bounds.min, bounds.max)) {
-                sortedLights.add(light);
+        if(lightingEnabled) {
+            for(Light light : lights) {
+                bounds.min.set(light.vector).sub(light.radius, light.radius, light.radius);
+                bounds.max.set(light.vector).add(light.radius, light.radius, light.radius);
+                if(frustum.testAab(bounds.min, bounds.max)) {
+                    sortedLights.add(light);
+                }
             }
+
+            sortedLights.sort((a, b) -> {
+                if(a == b) {
+                    return 0;
+                } else {
+                    float d1 = a.vector.distance(position);
+                    float d2 = b.vector.distance(position);
+
+                    return Float.compare(d1, d2);
+                }
+            });
+            sortedLights.setSize(Math.min(sortedLights.size(), LightPipeline.MAX_LIGHTS));
         }
-
-        sortedLights.sort((a, b) -> {
-            if(a == b) {
-                return 0;
-            } else {
-                float d1 = a.vector.distance(position);
-                float d2 = b.vector.distance(position);
-
-                return Float.compare(d1, d2);
-            }
-        });
-        sortedLights.setSize(Math.min(sortedLights.size(), LightPipeline.MAX_LIGHTS));
 
         for(Tile tile : tiles.values()) {
             if(tile.visible) {
@@ -197,17 +208,23 @@ public class Tiles implements TriangleSelector {
         rendered = 0;
 
         for(Tile tile : sortedTiles) {
-            if(last == null) {
+            boolean bind = last == null;
+
+            if(!bind) {
+                bind = !last.name.equals(tile.name);
+            }
+            if(bind) {
+                if(last != null) {
+                    last.getSelector(game).end();
+                }
                 last = tile;
                 tile.getSelector(game).mesh.lights.clear();
-                tile.getSelector(game).mesh.lights.addAll(sortedLights);
-                tile.getSelector(game).begin(projection, view);
-                binds++;
-            } else if(!last.name.equals(tile.name)) {
-                last.getSelector(game).end();
-                last = tile;
-                tile.getSelector(game).mesh.lights.clear();
-                tile.getSelector(game).mesh.lights.addAll(sortedLights);
+                if(lightingEnabled) {
+                    tile.getSelector(game).mesh.lights.addAll(sortedLights);
+                    tile.getSelector(game).mesh.ambientColor.set(0.2f, 0.2f, 0.2f, 1);
+                } else {
+                    tile.getSelector(game).mesh.ambientColor.set(1, 1, 1, 1);
+                }
                 tile.getSelector(game).begin(projection, view);
                 binds++;
             }
@@ -220,7 +237,7 @@ public class Tiles implements TriangleSelector {
 
         if(cell != null) {
             cell.getSelector(game).mesh.lights.clear();
-            cell.getSelector(game).mesh.lights.addAll(sortedLights);
+            cell.getSelector(game).mesh.ambientColor.set(1, 1, 1, 1);
             cell.getSelector(game).render(projection, view);
             binds++;
             rendered++;

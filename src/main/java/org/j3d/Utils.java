@@ -12,6 +12,16 @@ import java.nio.IntBuffer;
 public class Utils {
 
     private static boolean hasError = false;
+    
+    static int allocations = 0;
+
+    public static void allocate() {
+        allocations++;
+    }
+
+    public static int getAllocated() {
+        return allocations;
+    }
 
     public static void checkError(String tag) {
         if (!hasError) {
@@ -82,7 +92,7 @@ public class Utils {
 
     public static IntBuffer ensureCapacity(IntBuffer iBuf, int growBy) {
         if (iBuf.position() == iBuf.capacity()) {
-            Log.log(2, "increasing index buffer capacity to " + (iBuf.capacity() + growBy) + " ...");
+            Log.log(5, "increasing index buffer capacity to " + (iBuf.capacity() + growBy) + " ...");
             IntBuffer nBuf = BufferUtils.createIntBuffer(iBuf.capacity() + growBy);
             int position = iBuf.position();
             iBuf.flip();
@@ -90,13 +100,14 @@ public class Utils {
             nBuf.limit(nBuf.capacity());
             nBuf.position(position);
             iBuf = nBuf;
+            allocations++;
         }
         return iBuf;
     }
 
     public static FloatBuffer ensureCapacity(FloatBuffer vBuf, int growBy) {
         if (vBuf.position() == vBuf.capacity()) {
-            Log.log(2, "increasing vertex buffer capacity to " + (vBuf.capacity() + growBy) + " ...");
+            Log.log(5, "increasing vertex buffer capacity to " + (vBuf.capacity() + growBy) + " ...");
             FloatBuffer nBuf = BufferUtils.createFloatBuffer(vBuf.capacity() + growBy);
             int position = vBuf.position();
             vBuf.flip();
@@ -104,18 +115,20 @@ public class Utils {
             nBuf.limit(nBuf.capacity());
             nBuf.position(position);
             vBuf = nBuf;
+            allocations++;
         }
         return vBuf;
     }
 
     public static IntBuffer trimCapacity(IntBuffer iBuf) {
         if (iBuf.position() < iBuf.capacity()) {
-            Log.log(2, "trimming index buffer capacity to " + iBuf.position() + " ...");
+            Log.log(5, "trimming index buffer capacity to " + iBuf.position() + " ...");
             IntBuffer nBuf = BufferUtils.createIntBuffer(iBuf.position());
             iBuf.flip();
             nBuf.put(iBuf);
             nBuf.flip();
             iBuf = nBuf;
+            allocations++;
         } else {
             iBuf.flip();
         }
@@ -124,12 +137,13 @@ public class Utils {
 
     public static FloatBuffer trimCapacity(FloatBuffer vBuf) {
         if (vBuf.position() < vBuf.capacity()) {
-            Log.log(2, "trimming vertex buffer capacity to " + vBuf.position() + " ...");
+            Log.log(5, "trimming vertex buffer capacity to " + vBuf.position() + " ...");
             FloatBuffer nBuf = BufferUtils.createFloatBuffer(vBuf.position());
             vBuf.flip();
             nBuf.put(vBuf);
             nBuf.flip();
             vBuf = nBuf;
+            allocations++;
         } else {
             vBuf.flip();
         }
@@ -185,5 +199,14 @@ public class Utils {
 
     public static float toDegrees(float radians) {
         return radians * 180 / (float)Math.PI;
+    }
+
+    public static void clearConsole() {
+        StringBuilder b = new StringBuilder(10000);
+
+        for(int i = 0; i != b.capacity(); i++) {
+            b.append("\n");
+        }
+        System.out.println(b);
     }
 }

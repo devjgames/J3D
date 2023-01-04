@@ -4,6 +4,7 @@ import org.j3d.Collider;
 import org.j3d.Font;
 import org.j3d.Game;
 import org.j3d.Resource;
+import org.j3d.Utils;
 import org.joml.Matrix4f;
 
 public abstract class Demo {
@@ -22,6 +23,7 @@ public abstract class Demo {
         String info = "FPS=" + game.getFPS() + ", ";
 
         info += "RES=" + Resource.getInstances() + ", ";
+        info += "ALC=" + Utils.getAllocated() + ", ";
         if(tiles != null) {
             info += "RND=" + tiles.getRendered() + ", ";
             info += "BND=" + tiles.getBinds() + ", ";
