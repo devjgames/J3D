@@ -25,7 +25,6 @@ public class Collider {
     public float gravity = 2000;
     public float groundSlope = 45;
     public float roofSlope = 45;
-    public float speed = 125;
     public float radius = 16;
     public float intersectionBuffer = 0;
     public int intersectionBits = 0xFF;

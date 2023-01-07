@@ -53,6 +53,7 @@ public class LightPipeline extends Resource implements Asset {
     private IntBuffer iBuf = BufferUtils.createIntBuffer(6 * 6);
     private final BoundingBox bounds = new BoundingBox();
     private final Triangle triangle = new Triangle();
+    private int vertexCount = 0;
 
     public LightPipeline(File file) throws Exception {
         this.file = file;
@@ -120,6 +121,28 @@ public class LightPipeline extends Resource implements Asset {
         triangle.set(this.triangle);
     }
 
+    public int getVertexCount() {
+        return vertexCount;
+    }
+
+    public float vertexX(int i) {
+        return vBuf.get(i * 11 + 0);
+    }
+
+    public float vertexY(int i) {
+        return vBuf.get(i * 11 + 1);
+    }
+    
+    public float vertexZ(int i) {
+        return vBuf.get(i * 11 + 2);
+    }
+
+    public void setVertex(int i, float x, float y, float z) {
+        vBuf.put(i * 11 + 0, x);
+        vBuf.put(i * 11 + 1, y);
+        vBuf.put(i * 11 + 2, z);
+    }
+
     public BoundingBox getBounds() {
         return bounds;
     }
@@ -139,6 +162,8 @@ public class LightPipeline extends Resource implements Asset {
         vBuf.put(b);
 
         bounds.add(x, y, z);
+
+        vertexCount++;
     }
 
     public void pushFace(int ... indices) {
@@ -154,14 +179,18 @@ public class LightPipeline extends Resource implements Asset {
 
     public void buffer() {
         vBuf = Utils.trimCapacity(vBuf);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vBuf, GL15.GL_STATIC_DRAW);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        bufferVertices();
 
         iBuf = Utils.trimCapacity(iBuf);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, veo);
         GL15.glBufferData(GL15.GL_ELEMENT_ARRAY_BUFFER, iBuf, GL15.GL_STATIC_DRAW);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    public void bufferVertices() {
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vBuf, GL15.GL_STATIC_DRAW);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
 
     public void begin(Matrix4f projection, Matrix4f view) {
@@ -222,28 +251,6 @@ public class LightPipeline extends Resource implements Asset {
         begin(projection, view);
         render();
         end();
-    }
-
-    public void zeroCenter() {
-        Vector3f center = new Vector3f();
-
-        bounds.max.add(bounds.min, center).mul(0.5f);
-        for(int i = 0; i != vBuf.limit(); i += 11) {
-            float x = vBuf.get(i + 0);
-            float z = vBuf.get(i + 2);
-
-            x -= center.x;
-            z -= center.z;
-
-            vBuf.put(i + 0, x);
-            vBuf.put(i + 2, z);
-        }
-        bounds.max.sub(center);
-        bounds.min.sub(center);
-
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vBuf, GL15.GL_STATIC_DRAW);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
     }
 
     @Override

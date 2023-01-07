@@ -16,7 +16,7 @@ public abstract class Demo {
 
     public abstract boolean run(App app) throws Exception;
 
-    public void pushInfo(App app, Tiles tiles, Collider collider) {
+    public void pushInfo(App app, Collider collider) {
         Game game = app.getGame();
         Font font = app.getFont();
 
@@ -24,10 +24,6 @@ public abstract class Demo {
 
         info += "RES=" + Resource.getInstances() + ", ";
         info += "ALC=" + Utils.getAllocated() + ", ";
-        if(tiles != null) {
-            info += "RND=" + tiles.getRendered() + ", ";
-            info += "BND=" + tiles.getBinds() + ", ";
-        }
         if(collider != null) {
             info += "TST=" + collider.getTested() + ", ";
         }

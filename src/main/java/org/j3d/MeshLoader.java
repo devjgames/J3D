@@ -38,6 +38,10 @@ public class MeshLoader implements AssetLoader {
                             name = tmtlLine.substring(6).trim();
                         } else if(tmtlLine.startsWith("Kd ")) {
                             colors.put(name, Parser.parse(tmtlLine.split("\\s+"), 1, new Vector3f(1, 1, 1)));
+                        } else if(tmtlLine.startsWith("map_Kd ")) {
+                            File texFile = IO.file(file.getParentFile(), tmtlLine.substring(6).trim());
+
+                            mesh.texture = assets.load(texFile);
                         }
                     }
                 }

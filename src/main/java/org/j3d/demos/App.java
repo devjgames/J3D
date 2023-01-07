@@ -96,12 +96,9 @@ public class App {
     }
 
     public static void main(String[] args) throws Exception {
-        Tiles.addTileFactories("colors");
-        
         new App().run(
-            new TileEditor(),
-            new Scene("scene1"),
-            new Scene("scene2")
+            new Play("scene1"),
+            new Play("scene2")
         );
     }
 }
