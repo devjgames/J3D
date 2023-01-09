@@ -98,8 +98,10 @@ public class App {
     public static void main(String[] args) throws Exception {
         new App().run(
             new Editor(),
-            new Play("scene1"),
-            new Play("scene2")
+            new Play("scene1", new Logic(), true),
+            new Play("scene1", new Logic(), false),
+            new Play("scene2", new Logic(), true),
+            new Play("scene2", new Logic(), false)
         );
     }
 }

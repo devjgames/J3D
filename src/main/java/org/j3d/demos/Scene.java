@@ -26,6 +26,7 @@ public class Scene implements TriangleSelector {
         public final Vector3f position = new Vector3f();
         public float rotationDegrees = 0;
         public final float scale;
+        public Object tag = null;
 
         public Mesh(LightPipeline pipeline, float scale) {
             selector = new PipelineTriangleSelector(pipeline);
@@ -181,10 +182,10 @@ public class Scene implements TriangleSelector {
         }
     }
 
-    public void render(Matrix4f projection, Matrix4f view, boolean playing) throws Exception {
+    public void render(Matrix4f projection, Matrix4f view, boolean fpsCamera) throws Exception {
         Enumeration<String> names = meshGroups.keys();
 
-        if(playing) {
+        if(fpsCamera) {
             playerPosition.add(playerDirection, target);
             view.identity().lookAt(playerPosition, target, up);
         } else {
@@ -211,7 +212,7 @@ public class Scene implements TriangleSelector {
             }
             group.get(0).selector.end();
         }
-        if(!playing) {
+        if(!fpsCamera) {
             playerPipeline.lights.clear();
             playerPipeline.ambientColor.set(1, 1, 1, 1);
             playerPipeline.model

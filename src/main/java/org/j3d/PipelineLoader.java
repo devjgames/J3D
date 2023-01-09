@@ -7,7 +7,7 @@ import java.util.Vector;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-public class MeshLoader implements AssetLoader {
+public class PipelineLoader implements AssetLoader {
     
     @Override
     public Object load(File file, AssetManager assets) throws Exception {
@@ -40,8 +40,12 @@ public class MeshLoader implements AssetLoader {
                             colors.put(name, Parser.parse(tmtlLine.split("\\s+"), 1, new Vector3f(1, 1, 1)));
                         } else if(tmtlLine.startsWith("map_Kd ")) {
                             File texFile = IO.file(file.getParentFile(), tmtlLine.substring(6).trim());
+                            File decalFile = IO.file(file.getParentFile(), "decal_" + tmtlLine.substring(6).trim());
 
                             mesh.texture = assets.load(texFile);
+                            if(decalFile.exists()) {
+                                mesh.decal = assets.load(decalFile);
+                            }
                         }
                     }
                 }
