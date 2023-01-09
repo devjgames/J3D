@@ -3,7 +3,6 @@ package org.j3d.demos;
 import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.Utils;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
@@ -13,9 +12,9 @@ public class Play extends Demo {
     private Scene scene;
     private Collider collider;
     private final Vector3f f = new Vector3f();
-    private final Vector3f u = new Vector3f();
-    private final Vector3f r = new Vector3f();
-
+    private final Vector3f start = new Vector3f();
+    private final Vector3f startDirection = new Vector3f();
+    
     public Play(String name) {
         this.name = name;
     }
@@ -28,6 +27,11 @@ public class Play extends Demo {
         collider = new Collider();
         collider.radius = scene.playerRadius;
         collider.addTriangleSelector(scene);
+
+        start.set(scene.playerPosition);
+        startDirection.set(scene.playerDirection);
+
+        game.enableFPSMouse();
     }
 
     @Override
@@ -36,35 +40,29 @@ public class Play extends Demo {
 
         projection.identity().perspective(Utils.toRadians(60), game.getAspectRatio(), 1, 50000);
 
-        scene.render(projection, view);
+        scene.render(projection, view, true);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
         pushInfo(app, collider);
         game.getSpritePipeline().end();
         game.nextFrame();
 
-        if(game.isButtonDown(1)) {
-            Utils.rotateOffsetAndUp(scene.playerOffset, scene.up, game.getDeltaX() * 0.025f, 0);
-        }
+        Utils.rotateDirectionAndUp(scene.playerDirection, scene.up, game);
 
-        float dx = game.getMouseX() - game.getRenderTargetWidth() / 2;
-        float dy = game.getMouseY() - game.getRenderTargetHeight() / 2;
-        float dl = Vector2f.length(dx, dy);
-
-        f.set(scene.playerOffset).mul(-1, 0, -1);
+        f.set(scene.playerDirection).mul(1, 0, 1);
         collider.velocity.mul(0, 1, 0);
-        if(game.isButtonDown(0) && collider.getOnGround() && f.length() > 0.0000001 && dl > 0.1) {
-            f.normalize().cross(u.set(0, 1, 0), r).normalize().mul(dx / dl * scene.playerSpeed);
-            f.mul(-dy / dl * scene.playerSpeed);
-            collider.velocity.add(f.add(r));
-            f.normalize();
-            scene.playerDegrees1 = Utils.toDegrees((float)Math.acos(Math.max(-0.99, Math.min(0.99, f.x))));
-            if(f.z > 0) {
-                scene.playerDegrees1 = 360 - scene.playerDegrees1;
+        if((game.isButtonDown(0) || game.isButtonDown(1)) && f.length() > 0.0000001) {
+            f.normalize().mul(scene.playerSpeed);
+            if(game.isButtonDown(1)) {
+                f.negate();
             }
-            scene.playerDegrees2 -= 180 * game.getElapsedTime();
+            collider.velocity.add(f);
         }
         collider.collide(game, scene.playerPosition);
-
+        if(scene.playerPosition.y < -8) {
+            scene.playerPosition.set(start);
+            scene.playerDirection.set(startDirection);
+            scene.up.set(0, 1, 0);
+        }
         return !game.isKeyDown(GLFW.GLFW_KEY_ESCAPE);
     }
     

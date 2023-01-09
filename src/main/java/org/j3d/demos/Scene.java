@@ -10,7 +10,7 @@ import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.IO;
 import org.j3d.LightPipeline;
-import org.j3d.MeshTriangleSelector;
+import org.j3d.PipelineTriangleSelector;
 import org.j3d.Parser;
 import org.j3d.Utils;
 import org.j3d.Collider.TriangleSelector;
@@ -22,18 +22,28 @@ import org.joml.Vector4f;
 public class Scene implements TriangleSelector {
 
     public static class Mesh {
-        public final MeshTriangleSelector selector;
+        public final PipelineTriangleSelector selector;
         public final Vector3f position = new Vector3f();
         public float rotationDegrees = 0;
         public final float scale;
 
         public Mesh(LightPipeline pipeline, float scale) {
-            selector = new MeshTriangleSelector(pipeline);
+            selector = new PipelineTriangleSelector(pipeline);
             this.scale = scale;
         }
 
         public void setTransform() {
             selector.setTransform(position.x, position.y, position.z, 0, rotationDegrees, 0, scale);
+        }
+
+        public Mesh newInstance() {
+            Mesh mesh = new Mesh(selector.pipeline, scale);
+
+            mesh.rotationDegrees = rotationDegrees;
+            mesh.position.set(position);
+            mesh.setTransform();
+
+            return mesh;
         }
     }
 
@@ -41,9 +51,8 @@ public class Scene implements TriangleSelector {
     public final String meshSet;
     public final Vector3f playerPosition = new Vector3f();
     public final Vector3f playerOffset = new Vector3f(100, 100, 100);
-    public final Vector3f target = new Vector3f();
+    public final Vector3f playerDirection = new Vector3f(1, 0, 0);
     public final Vector3f up = new Vector3f(0, 1, 0);
-    public final Vector3f eye = new Vector3f();
     public float playerDegrees1 = 0;
     public float playerDegrees2 = 0;
     public final float playerScale;
@@ -52,13 +61,15 @@ public class Scene implements TriangleSelector {
     public final float scale;
     public boolean lightingEnabled;
     public final Vector<Light> lights = new Vector<>();
-    public final Vector4f backgroundColor = new Vector4f(0, 0, 0, 1);
-    public final Hashtable<String, Boolean> meshCollidable = new Hashtable<>();
-    public final Vector<Mesh> meshes = new Vector<>();
     public final LightPipeline playerPipeline;
+    public final Vector4f backgroundColor = new Vector4f(0, 0, 0, 1);
 
     private final Hashtable<String, Vector<Mesh>> meshGroups = new Hashtable<>();
     private boolean enabled = true;
+    private final Hashtable<String, Boolean> meshCollidable = new Hashtable<>();
+    private final Vector<Mesh> meshes = new Vector<>();
+    private final Vector3f target = new Vector3f();
+    private final Vector3f eye = new Vector3f();
 
     public Scene(Game game, String name) throws Exception {
         String[] lines = new String(IO.readAllBytes(IO.file(IO.file("assets/scenes"), name + ".sh"))).split("\\n+");
@@ -79,9 +90,10 @@ public class Scene implements TriangleSelector {
             } else if(tline.startsWith("player ")) {
                 Parser.parse(tokens, 1, playerPosition);
                 Parser.parse(tokens, 4, playerOffset);
-                playerScale = Parser.parse(tokens, 7, playerScale);
-                playerSpeed = Parser.parse(tokens, 8, playerSpeed);
-                playerRadius = Parser.parse(tokens, 9, playerRadius);
+                Parser.parse(tokens, 7, playerDirection);
+                playerScale = Parser.parse(tokens, 10, playerScale);
+                playerSpeed = Parser.parse(tokens, 11, playerSpeed);
+                playerRadius = Parser.parse(tokens, 12, playerRadius);
             } else if(tline.startsWith("scale ")) {
                 scale = Parser.parse(tokens, 1, scale);
             } else if(tline.startsWith("lighting-enabled ")) {
@@ -140,31 +152,57 @@ public class Scene implements TriangleSelector {
         zeroCenter(playerPipeline);
     }
 
+    public int getMeshCount() {
+        return meshes.size();
+    }
 
-    public void render(Matrix4f projection, Matrix4f view) throws Exception {
-        Enumeration<String> names = meshGroups.keys();
-        float v = 1;
+    public Mesh meshAt(int i) {
+        return meshes.get(i);
+    }
 
-        if(playerPosition.y < 0) {
-            v = 1 - Math.min(Math.abs(playerPosition.y) / 100, 1);
+    public void add(Mesh mesh) {
+        String name = IO.fileNameWithOutExtension(mesh.selector.pipeline.getFile());
+
+        mesh = mesh.newInstance();
+        meshes.add(mesh);
+        if(!meshGroups.containsKey(name)) {
+            meshGroups.put(name, new Vector<>());
         }
+        meshGroups.get(name).add(mesh);
+    }
 
-        target.set(playerPosition);
-        target.y = 0;
-        target.add(playerOffset, eye);
-        view.identity().lookAt(eye, target, up);
+    public void remove(Mesh mesh) {
+        String name = IO.fileNameWithOutExtension(mesh.selector.pipeline.getFile());
+
+        meshes.remove(mesh);
+        meshGroups.get(name).remove(mesh);
+        if(meshGroups.get(name).isEmpty()) {
+            meshGroups.remove(name);
+        }
+    }
+
+    public void render(Matrix4f projection, Matrix4f view, boolean playing) throws Exception {
+        Enumeration<String> names = meshGroups.keys();
+
+        if(playing) {
+            playerPosition.add(playerDirection, target);
+            view.identity().lookAt(playerPosition, target, up);
+        } else {
+            playerPosition.add(playerOffset, eye);
+            view.identity().lookAt(eye, playerPosition, up);
+        }
 
         Utils.clear(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
         while(names.hasMoreElements()) {
             String name = names.nextElement();
             Vector<Mesh> group = meshGroups.get(name);
 
-            group.get(0).selector.mesh.lights.clear();
+            group.get(0).selector.pipeline.lights.clear();
             if(lightingEnabled) {
-                group.get(0).selector.mesh.lights.addAll(lights);
-                group.get(0).selector.mesh.ambientColor.set(0.2f, 0.2f, 0.2f, 1);
+                group.get(0).selector.pipeline.lights.addAll(lights);
+                group.get(0).selector.pipeline.ambientColor.set(0.2f, 0.2f, 0.2f, 1);
             } else {
-                group.get(0).selector.mesh.ambientColor.set(1, 1, 1, 1);
+                group.get(0).selector.pipeline.ambientColor.set(1, 1, 1, 1);
             }
             group.get(0).selector.begin(projection, view);
             for(Mesh mesh : group) {
@@ -173,14 +211,17 @@ public class Scene implements TriangleSelector {
             }
             group.get(0).selector.end();
         }
-        playerPipeline.ambientColor.set(v, v, v, 1);
-        playerPipeline.model
-            .identity()
-            .translate(playerPosition)
-            .rotate(Utils.toRadians(playerDegrees1), 0, 1, 0)
-            .rotate(Utils.toRadians(playerDegrees2), 0, 0, 1)
-            .scale(playerScale);
-        playerPipeline.render(projection, view);
+        if(!playing) {
+            playerPipeline.lights.clear();
+            playerPipeline.ambientColor.set(1, 1, 1, 1);
+            playerPipeline.model
+                .identity()
+                .translate(playerPosition)
+                .rotate(Utils.toRadians(playerDegrees1), 0, 1, 0)
+                .rotate(Utils.toRadians(playerDegrees2), 0, 0, 1)
+                .scale(playerScale);
+            playerPipeline.render(projection, view);
+        }
     }
 
     @Override
@@ -229,22 +270,27 @@ public class Scene implements TriangleSelector {
 
         b.append("# mesh-set name\n");
         b.append("mesh-set " + meshSet + "\n");
+        b.append("\n");
 
-        b.append("# player name x y z off-x off-y off-z scale speed radius\n");
+        b.append("# player x y z off-x off-y off-z scale speed radius\n");
         b.append(
             "player " + 
             Parser.toString(playerPosition) + " " + 
             Parser.toString(playerOffset) + " " + 
+            Parser.toString(playerDirection) + " " +
             playerScale + " " + 
             playerSpeed + " " + 
             playerRadius + "\n"
         );
+        b.append("\n");
 
         b.append("# scale s\n");
         b.append("scale " + scale + "\n");
+        b.append("\n");
 
         b.append("# lighting-enabled bool\n");
         b.append("lighting-enabled " + lightingEnabled + "\n");
+        b.append("\n");
 
         b.append("# light directional x y z r g b a radius\n");
         b.append("# ...\n");
@@ -257,9 +303,11 @@ public class Scene implements TriangleSelector {
                 light.radius + "\n"
             );
         }
+        b.append("\n");
 
         b.append("# background r g b a\n");
         b.append("background-color " + Parser.toString(backgroundColor) + "\n");
+        b.append("\n");
 
         b.append("# mesh-cfg name collidable\n");
         b.append("# ...\n");
@@ -269,22 +317,26 @@ public class Scene implements TriangleSelector {
 
             b.append("mesh-cfg " + key + " " + collidable + "\n");
         }
+        b.append("\n");
 
         b.append("# mesh name x y z rotation-degrees\n");
         b.append("# ...\n");
         for(Mesh mesh : meshes) {
             b.append(
-                IO.fileNameWithOutExtension(mesh.selector.mesh.getFile()) + " " +
+                "mesh " +
+                IO.fileNameWithOutExtension(mesh.selector.pipeline.getFile()) + " " +
                 mesh.position.x + " " +
-                mesh.position.z + " " + 
+                mesh.position.y + " " + 
                 mesh.position.z + " " +
                 mesh.rotationDegrees + "\n"
             );
         }
+        b.append("\n");
+
         IO.writeAllBytes(b.toString().getBytes(), IO.file(IO.file("assets/scenes"), name + ".sh"));
     }
 
-    private void zeroCenter(LightPipeline pipeline) {
+    public static void zeroCenter(LightPipeline pipeline) {
         Vector3f center = new Vector3f();
         BoundingBox bounds = pipeline.getBounds();
 

@@ -97,6 +97,7 @@ public class App {
 
     public static void main(String[] args) throws Exception {
         new App().run(
+            new Editor(),
             new Play("scene1"),
             new Play("scene2")
         );
