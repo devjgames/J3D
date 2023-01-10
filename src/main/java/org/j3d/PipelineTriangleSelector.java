@@ -6,13 +6,13 @@ import org.joml.Matrix4f;
 public class PipelineTriangleSelector implements TriangleSelector {
 
     public final Matrix4f model = new Matrix4f();
-    public final LightPipeline pipeline;
+    public final TrianglePipeline pipeline;
 
     private boolean enabled = true;
     private final Triangle triangle = new Triangle();
     private final BoundingBox bounds = new BoundingBox();
 
-    public PipelineTriangleSelector(LightPipeline pipeline) {
+    public PipelineTriangleSelector(TrianglePipeline pipeline) {
         this.pipeline = pipeline;
     }
 
@@ -21,7 +21,7 @@ public class PipelineTriangleSelector implements TriangleSelector {
     }
 
     public void render() {
-        pipeline.model.set(model);
+        pipeline.getModel().set(model);
         pipeline.render();
     }
 
@@ -59,7 +59,7 @@ public class PipelineTriangleSelector implements TriangleSelector {
         float t = collider.time[0];
         boolean hit = false;
 
-        pipeline.model.set(model);
+        pipeline.getModel().set(model);
         bounds.min.set(pipeline.getBounds().min);
         bounds.max.set(pipeline.getBounds().max);
         bounds.transform(model);
@@ -83,7 +83,7 @@ public class PipelineTriangleSelector implements TriangleSelector {
     public boolean resolve(Collider collider) {
         boolean hit = false;
 
-        pipeline.model.set(model);
+        pipeline.getModel().set(model);
         bounds.min.set(pipeline.getBounds().min);
         bounds.max.set(pipeline.getBounds().max);
         bounds.transform(model);

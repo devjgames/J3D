@@ -2,6 +2,7 @@ package org.j3d.demos;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -9,12 +10,13 @@ import org.j3d.BoundingBox;
 import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.IO;
-import org.j3d.LightPipeline;
+import org.j3d.TexturePipeline;
+import org.j3d.TrianglePipeline;
 import org.j3d.PipelineTriangleSelector;
+import org.j3d.Texture;
 import org.j3d.Parser;
 import org.j3d.Utils;
 import org.j3d.Collider.TriangleSelector;
-import org.j3d.LightPipeline.Light;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -29,7 +31,9 @@ public class Scene implements TriangleSelector {
         public Animator animator = null;
         public boolean visible = true;
 
-        public Mesh(LightPipeline pipeline, float scale) {
+        private final Vector4f color = new Vector4f();
+
+        public Mesh(TrianglePipeline pipeline, float scale) {
             selector = new PipelineTriangleSelector(pipeline);
             this.scale = scale;
         }
@@ -52,12 +56,15 @@ public class Scene implements TriangleSelector {
     private static class MeshConfig {
         public final boolean collidable;
         public final boolean cameraCollidable;
+        public final Vector4f color = new Vector4f(1, 1, 1, 1);
 
         public MeshConfig(boolean collidable, boolean cameraCollidable) {
             this.collidable = collidable;
             this.cameraCollidable = cameraCollidable;
         }
     }
+
+    private static final HashSet<String> updated = new HashSet<>();
 
     public final String name;
     public final String meshSet;
@@ -71,9 +78,7 @@ public class Scene implements TriangleSelector {
     public final float playerSpeed;
     public final float playerRadius;
     public final float scale;
-    public boolean lightingEnabled;
-    public final Vector<Light> lights = new Vector<>();
-    public final LightPipeline playerPipeline;
+    public final TexturePipeline playerPipeline;
     public final Vector4f backgroundColor = new Vector4f(0, 0, 0, 1);
 
     private final Hashtable<String, Vector<Mesh>> meshGroups = new Hashtable<>();
@@ -92,6 +97,8 @@ public class Scene implements TriangleSelector {
         float scale = 1;
         float playerRadius = 1;
 
+        updated.clear();
+
         this.name = name;
 
         for(String line : lines) {
@@ -109,17 +116,6 @@ public class Scene implements TriangleSelector {
                 playerRadius = Parser.parse(tokens, 12, playerRadius);
             } else if(tline.startsWith("scale ")) {
                 scale = Parser.parse(tokens, 1, scale);
-            } else if(tline.startsWith("lighting-enabled ")) {
-                lightingEnabled = Parser.parse(tokens, 1, lightingEnabled);
-            } else if(tline.startsWith("light ")) {
-                Light light = new Light();
-
-                light.directional = Parser.parse(tokens, 1, light.directional);
-                Parser.parse(tokens, 2, light.vector);
-                Parser.parse(tokens, 5, light.color);
-                light.radius = Parser.parse(tokens, 9, light.radius);
-
-                lights.add(light);
             } else if(tline.startsWith("background ")) {
                 Parser.parse(tokens, 1, backgroundColor);
             } else if(tline.startsWith("mesh-cfg ")) {
@@ -133,25 +129,29 @@ public class Scene implements TriangleSelector {
             } else if(tline.startsWith("mesh ")) {
                 boolean collidable = true;
                 boolean cameraCollidable = true;
+                Vector4f color = new Vector4f(1, 1, 1, 1);
 
                 if(meshConfig.containsKey(tokens[1])) {
                     MeshConfig config = meshConfig.get(tokens[1]);
 
                     collidable = config.collidable;
                     cameraCollidable = config.cameraCollidable;
+                    color.set(config.color);
                 }
 
-                LightPipeline pipeline = game.getAssets().load(
+                TexturePipeline pipeline = game.getAssets().load(
                     IO.file(IO.file(IO.file("assets/meshes"), meshSet), tokens[1] + ".obj")
                     );
                 Mesh mesh = new Mesh(pipeline, scale);
 
-                zeroCenter(pipeline);
+                updateVertices(pipeline);
 
                 mesh.selector.setEnabled(collidable);
                 if(!cameraCollidable) {
-                    mesh.selector.pipeline.triangleTag = 2;
+                    mesh.selector.pipeline.setTriangleTag(2);
                 }
+                ((TexturePipeline)mesh.selector.pipeline).color.set(color);
+                mesh.color.set(color);
                 mesh.position.set(
                     Parser.parse(tokens, 2, 0.0f), 
                     Parser.parse(tokens, 3, 0.0f),
@@ -159,10 +159,6 @@ public class Scene implements TriangleSelector {
                 );
                 mesh.rotationDegrees = Parser.parse(tokens, 5, 0.0f);
                 mesh.setTransform();
-
-                if(!lightingEnabled) {
-                    pipeline.ambientColor.set(1, 1, 1, 1);
-                }
 
                 meshes.add(mesh);
 
@@ -179,7 +175,7 @@ public class Scene implements TriangleSelector {
         this.scale = scale;
 
         playerPipeline = game.getAssets().load(IO.file(IO.file(IO.file("assets/meshes"), meshSet), "player.obj"));
-        zeroCenter(playerPipeline);
+        updateVertices(playerPipeline);
     }
 
     public int getBinds() {
@@ -215,6 +211,10 @@ public class Scene implements TriangleSelector {
         }
     }
 
+    public void resetColor(Mesh mesh) {
+        ((TexturePipeline)mesh.selector.pipeline).color.set(mesh.color);
+    }
+
     public void render(Matrix4f projection, Matrix4f view, boolean fpsCamera) throws Exception {
         Enumeration<String> names = meshGroups.keys();
 
@@ -233,10 +233,6 @@ public class Scene implements TriangleSelector {
             String name = names.nextElement();
             Vector<Mesh> group = meshGroups.get(name);
 
-            group.get(0).selector.pipeline.lights.clear();
-            if(lightingEnabled) {
-                group.get(0).selector.pipeline.lights.addAll(lights);
-            }
             group.get(0).selector.begin(projection, view);
             for(Mesh mesh : group) {
                 if(mesh.visible) {
@@ -248,9 +244,7 @@ public class Scene implements TriangleSelector {
             binds++;
         }
         if(!fpsCamera) {
-            playerPipeline.lights.clear();
-            playerPipeline.ambientColor.set(1, 1, 1, 1);
-            playerPipeline.model
+            playerPipeline.getModel()
                 .identity()
                 .translate(playerPosition)
                 .rotate(Utils.toRadians(playerDegrees1), 0, 1, 0)
@@ -308,7 +302,7 @@ public class Scene implements TriangleSelector {
         b.append("mesh-set " + meshSet + "\n");
         b.append("\n");
 
-        b.append("# player x y z off-x off-y off-z scale speed radius\n");
+        b.append("# player x y z off-x off-y off-z dir-x dir-y dir-z scale speed radius\n");
         b.append(
             "player " + 
             Parser.toString(playerPosition) + " " + 
@@ -324,34 +318,23 @@ public class Scene implements TriangleSelector {
         b.append("scale " + scale + "\n");
         b.append("\n");
 
-        b.append("# lighting-enabled bool\n");
-        b.append("lighting-enabled " + lightingEnabled + "\n");
-        b.append("\n");
-
-        b.append("# light directional x y z r g b a radius\n");
-        b.append("# ...\n");
-        for(Light light : lights) {
-            b.append(
-                "light " + 
-                light.directional + " " +
-                Parser.toString(light.vector) + " " +
-                Parser.toString(light.color) + " " + 
-                light.radius + "\n"
-            );
-        }
-        b.append("\n");
-
         b.append("# background r g b a\n");
         b.append("background-color " + Parser.toString(backgroundColor) + "\n");
         b.append("\n");
 
-        b.append("# mesh-cfg name collidable camera-collidable\n");
+        b.append("# mesh-cfg name collidable camera-collidable r g b a\n");
         b.append("# ...\n");
         while(keys.hasMoreElements()) {
             String key = keys.nextElement();
             MeshConfig config = meshConfig.get(key);
 
-            b.append("mesh-cfg " + key + " " + config.collidable + " " + config.cameraCollidable + "\n");
+            b.append(
+                "mesh-cfg " + 
+                key + " " + 
+                config.collidable + " " + 
+                config.cameraCollidable + " " + 
+                Parser.toString(config.color) + " "  + "\n"
+                );
         }
         b.append("\n");
 
@@ -372,20 +355,85 @@ public class Scene implements TriangleSelector {
         IO.writeAllBytes(b.toString().getBytes(), IO.file(IO.file("assets/scenes"), name + ".sh"));
     }
 
-    public static void zeroCenter(LightPipeline pipeline) {
+    public static void updateVertices(TrianglePipeline pipeline) {
+        String name = IO.fileNameWithOutExtension(pipeline.getFile());
+
+        if(updated.contains(name)) {
+            return;
+        }
+        updated.add(name);
+
+        TexturePipeline texturePipeline = (TexturePipeline)pipeline;
+        
+        for(int i = 0; i != pipeline.getFaceCount(); i++) {
+            float minx = Float.MAX_VALUE;
+            float miny = Float.MAX_VALUE;
+            float maxx = -minx;
+            float maxy = -miny;
+            int index = (int)pipeline.vertexAt(pipeline.faceVertexAt(i, 0), 5);
+            int w = 1;
+            int h = 1;
+
+            if(index >= 0 && index < TexturePipeline.MAX_TEXTURES) {
+                Texture texture = texturePipeline.textures[index];
+
+                if(texture != null) {
+                    w = texture.width;
+                    h = texture.height;
+                }
+            }
+
+            for(int j = 0; j != pipeline.getFaceVertexCount(i); j++) {
+                int k = pipeline.faceVertexAt(i, j);
+                float x = pipeline.vertexAt(k, 3);
+                float y = pipeline.vertexAt(k, 4);
+
+                minx = Math.min(x, minx);
+                miny = Math.min(y, miny);
+                maxx = Math.max(x, maxx);
+                maxy = Math.max(y, maxy);
+            }
+
+            int tilew = (int)(maxx * w - minx * w);
+            int tileh = (int)(maxy * h - miny * h);
+            
+            if(tilew > 0 && tileh > 0) {
+                for(int j = 0; j != pipeline.getFaceVertexCount(i); j++) {
+                    int k = pipeline.faceVertexAt(i, j);
+                    float x = pipeline.vertexAt(k, 3);
+                    float y = pipeline.vertexAt(k, 4);
+
+                    if(x > minx + 1.0f / w) {
+                        x -= 1.0f / w * 0.05f;
+                    } else {
+                        x += 1.0f / w * 0.05f;
+                    }
+                    if(y > miny + 1.0f / h) {
+                        y -= 1.0f / h * 0.05f;
+                    } else {
+                        y += 1.0f / h * 0.05f;
+                    }
+                    pipeline.setVertexAt(k, 3, x);
+                    pipeline.setVertexAt(k, 4, y);
+                }
+            }
+        }
+
         Vector3f center = new Vector3f();
         BoundingBox bounds = pipeline.getBounds();
 
         bounds.max.add(bounds.min, center).mul(0.5f);
         for(int i = 0; i != pipeline.getVertexCount(); i++) {
-            float x = pipeline.vertexX(i);
-            float y = pipeline.vertexY(i);
-            float z = pipeline.vertexZ(i);
+            float x = pipeline.vertexAt(i, 0);
+            float y = pipeline.vertexAt(i, 1);
+            float z = pipeline.vertexAt(i, 2);
 
             x -= center.x;
             z -= center.z;
 
-            pipeline.setVertex(i, x, y, z);
+            pipeline.setVertexAt(i, 0, x);
+            pipeline.setVertexAt(i, 1, y);
+            pipeline.setVertexAt(i, 2, z);
         }
         bounds.max.sub(center.x, 0, center.z);
         bounds.min.sub(center.x, 0, center.z);

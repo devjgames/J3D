@@ -1,22 +1,16 @@
 # mesh-set name
 mesh-set dungeon
 
-# player x y z off-x off-y off-z scale speed radius
+# player x y z off-x off-y off-z dir-x dir-y dir-z scale speed radius
 player 11.215604 32.0 8.800894 14.077412 41.50219 45.21949 1.0 0.0 -1.0 20.0 50.0 8.0
 
 # scale s
 scale 16.0
 
-# lighting-enabled bool
-lighting-enabled false
-
-# light directional x y z r g b a radius
-# ...
-
 # background r g b a
 background-color 0.0 0.0 0.0 1.0
 
-# mesh-cfg name collidable camera-collidable
+# mesh-cfg name collidable camera-collidable r g b a
 # ...
 
 # mesh name x y z rotation-degrees

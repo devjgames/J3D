@@ -6,7 +6,7 @@ import java.util.Vector;
 import org.j3d.BoundingBox;
 import org.j3d.Game;
 import org.j3d.IO;
-import org.j3d.LightPipeline;
+import org.j3d.TexturePipeline;
 import org.j3d.Parser;
 import org.j3d.Triangle;
 import org.j3d.UIManager;
@@ -103,8 +103,6 @@ public class Editor extends Demo {
                 direction.mul(t, p);
                 origin.add(p, p);
 
-                mesh.selector.pipeline.lights.clear();
-                mesh.selector.pipeline.ambientColor.set(1, 1, 1, 1);
                 mesh.position.x = (int)Math.round(p.x / s) * s;
                 mesh.position.z = (int)Math.round(p.z / s) * s;
                 mesh.setTransform();
@@ -140,13 +138,13 @@ public class Editor extends Demo {
             manager.addRow(5);
             if(showMeshes) {
                 if((result = manager.list("Editor-mesh-list", 0, meshNames, 20, 8, selMesh)) != null) {
-                    LightPipeline pipeline = game.getAssets().load(
+                    TexturePipeline pipeline = game.getAssets().load(
                         IO.file(IO.file(IO.file("assets/meshes"), scene.meshSet), meshNames.get((Integer)result) + ".obj")
                         );
                     mesh = new Mesh(pipeline, scene.scale);
                     showMeshes = false;
 
-                    Scene.zeroCenter(mesh.selector.pipeline);
+                    Scene.updateVertices(mesh.selector.pipeline);
                 }
                 selMesh = -2;
                 gap = 5;
@@ -171,14 +169,14 @@ public class Editor extends Demo {
                 }
                 meshNames.sort((a, b) -> a.compareTo(b));
 
-                LightPipeline pipeline = game.getAssets().load(
+                TexturePipeline pipeline = game.getAssets().load(
                     IO.file(IO.file(IO.file("assets/meshes"), scene.meshSet), meshNames.get(selMesh) + ".obj")
                     );
                 mesh = new Mesh(pipeline, scene.scale);
                 showScenes = false;
                 deletePreview = null;
 
-                Scene.zeroCenter(mesh.selector.pipeline);
+                Scene.updateVertices(mesh.selector.pipeline);
             }
             selScene = -2;
             gap = 5;
@@ -220,7 +218,7 @@ public class Editor extends Demo {
                     time[0] = Float.MAX_VALUE;
                     if(bounds.intersects(origin, direction, time)) {
                         time[0] = t;
-                        iMesh.selector.pipeline.model.set(iMesh.selector.model);
+                        iMesh.selector.pipeline.getModel().set(iMesh.selector.model);
                         for(int j = 0; j != iMesh.selector.pipeline.getTriangleCount(); j++) {
                             iMesh.selector.pipeline.triangleAt(j, triangle);
                             if(triangle.n.dot(direction) < 0) {

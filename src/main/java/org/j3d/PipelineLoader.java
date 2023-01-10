@@ -11,14 +11,13 @@ public class PipelineLoader implements AssetLoader {
     
     @Override
     public Object load(File file, AssetManager assets) throws Exception {
-        LightPipeline pipeline = new LightPipeline(file);
+        TexturePipeline pipeline = new TexturePipeline(file);
         String[] lines = new String(IO.readAllBytes(file)).split("\\n+");
         Vector<Vector3f> vList = new Vector<>(1000);
         Vector<Vector2f> tList = new Vector<>(1000);
-        Vector<Vector3f> nList = new Vector<>(1000);
+        Hashtable<String, Integer> keyedTextures = new Hashtable<>();
         int vCount = 0;
-        Hashtable<String, Vector3f> colors = new Hashtable<>();
-        Vector3f color = new Vector3f(1, 1, 1);
+        int texture = -1;
 
         for(String line : lines) {
             String tLine = line.trim();
@@ -30,42 +29,31 @@ public class PipelineLoader implements AssetLoader {
                 if(mtlFile.exists()) {
                     String[] mtlLines = new String(IO.readAllBytes(mtlFile)).split("\\n+");
                     String name = null;
+                    int index = 0;
 
                     for(String mtlLine : mtlLines) {
                         String tmtlLine = mtlLine.trim();
 
                         if(tmtlLine.startsWith("newmtl ")) {
                             name = tmtlLine.substring(6).trim();
-                        } else if(tmtlLine.startsWith("Kd ")) {
-                            colors.put(name, Parser.parse(tmtlLine.split("\\s+"), 1, new Vector3f(1, 1, 1)));
                         } else if(tmtlLine.startsWith("map_Kd ")) {
-                            File texFile = IO.file(file.getParentFile(), tmtlLine.substring(6).trim());
-                            File decalFile = IO.file(file.getParentFile(), "decal_" + tmtlLine.substring(6).trim());
-
-                            pipeline.texture = assets.load(texFile);
-                            if(decalFile.exists()) {
-                                pipeline.decal = assets.load(decalFile);
+                            keyedTextures.put(name, index);
+                            if(index < TexturePipeline.MAX_TEXTURES) {
+                                pipeline.textures[index] = assets.load(IO.file(file.getParentFile(), tmtlLine.substring(6).trim()));
                             }
+                            index++;
                         }
                     }
                 }
             } else if(tLine.startsWith("usemtl ")) {
-                String key = tLine.substring(6).trim();
-
-
-                if(colors.containsKey(key)) {
-                    color = colors.get(key);
-                    pipeline.vertexColorEnabled = true;
-
-                    Log.log(1, "setting obj mesh vertex color enabled = true");
-                }
+                String name = tLine.substring(6).trim();
+                
+                texture = keyedTextures.get(name);
             } else if(tLine.startsWith("v ")) {
                 vList.add(Parser.parse(tokens, 1, new Vector3f()));
             } else if(tLine.startsWith("vt ")) {
                 tList.add(Parser.parse(tokens, 1, new Vector2f()));
                 tList.lastElement().y = 1 - tList.lastElement().y;
-            } else if(tLine.startsWith("vn ")) {
-                nList.add(Parser.parse(tokens, 1, new Vector3f()));
             } else if(tLine.startsWith("f ")) {
                 int[] indices = new int[tokens.length - 1];
 
@@ -73,12 +61,10 @@ public class PipelineLoader implements AssetLoader {
                     String[] iTokens = tokens[i].split("/");
                     int vI = Integer.parseInt(iTokens[0]) - 1;
                     int tI = Integer.parseInt(iTokens[1]) - 1;
-                    int nI = Integer.parseInt(iTokens[2]) - 1;
                     Vector3f v = vList.get(vI);
                     Vector2f t = tList.get(tI);
-                    Vector3f n = nList.get(nI);
 
-                    pipeline.pushVertex(v.x, v.y, v.z, t.x, t.y, n.x, n.y, n.z, color.x, color.y, color.z);
+                    pipeline.pushVertex(v.x, v.y, v.z, t.x, t.y, texture);
 
                     indices[i - 1] = vCount++;
                 }

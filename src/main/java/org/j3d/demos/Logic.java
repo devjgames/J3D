@@ -4,6 +4,7 @@ import org.j3d.BoundingBox;
 import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.IO;
+import org.j3d.TexturePipeline;
 import org.j3d.Triangle;
 import org.j3d.Utils;
 import org.j3d.demos.Scene.Mesh;
@@ -74,13 +75,13 @@ public class Logic {
             spaceDown = false;
         }
 
-        if(mesh != null) {
-            mesh.selector.pipeline.ambientColor.set(4, 3, 4, 1);
+        if(mesh != null && !game.isButtonDown(0) && !game.isButtonDown(1)) {
+            ((TexturePipeline)mesh.selector.pipeline).color.set(4, 3, 4, 1);
             for(int i = 0; i != scene.getMeshCount(); i++) {
                 Mesh mesh2 = scene.meshAt(i);
 
                 if(mesh2.animator == mesh.animator.join && mesh2.animator != null) {
-                    mesh2.selector.pipeline.ambientColor.set(4, 3, 4, 1);
+                    ((TexturePipeline)mesh2.selector.pipeline).color.set(4, 3, 4, 1);
                 }
             }
             if(down) {
@@ -106,16 +107,12 @@ public class Logic {
             float t = collider.time[0];
 
             mesh.setTransform();
-            mesh.selector.pipeline.model.set(mesh.selector.model);
+            mesh.selector.pipeline.getModel().set(mesh.selector.model);
             bounds.min.set(mesh.selector.pipeline.getBounds().min);
             bounds.max.set(mesh.selector.pipeline.getBounds().max);
             bounds.transform(mesh.selector.model);
 
-            if(scene.lightingEnabled) {
-                mesh.selector.pipeline.ambientColor.set(0.2f, 0.2f, 0.2f, 1);
-            } else {
-                mesh.selector.pipeline.ambientColor.set(1, 1, 1, 1);
-            }
+            scene.resetColor(mesh);
 
             collider.time[0] = Float.MAX_VALUE;
             if(bounds.intersects(collider.origin, collider.direction, collider.time)) {

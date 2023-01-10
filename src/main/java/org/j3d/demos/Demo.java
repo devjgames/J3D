@@ -38,7 +38,7 @@ public abstract class Demo {
         game.getSpritePipeline().push(
             font, 
             info, 
-            5, 10, game.getFramebufferHeight() - 10 - font.getCharHeight(), 
+            5, 10, h - 10 - font.getCharHeight(), 
             1, 1, 1, 1
             );
         if(drawCrossHair) {
