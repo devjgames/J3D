@@ -11,7 +11,7 @@ public class PipelineLoader implements AssetLoader {
     
     @Override
     public Object load(File file, AssetManager assets) throws Exception {
-        LightPipeline mesh = new LightPipeline(file);
+        LightPipeline pipeline = new LightPipeline(file);
         String[] lines = new String(IO.readAllBytes(file)).split("\\n+");
         Vector<Vector3f> vList = new Vector<>(1000);
         Vector<Vector2f> tList = new Vector<>(1000);
@@ -42,9 +42,9 @@ public class PipelineLoader implements AssetLoader {
                             File texFile = IO.file(file.getParentFile(), tmtlLine.substring(6).trim());
                             File decalFile = IO.file(file.getParentFile(), "decal_" + tmtlLine.substring(6).trim());
 
-                            mesh.texture = assets.load(texFile);
+                            pipeline.texture = assets.load(texFile);
                             if(decalFile.exists()) {
-                                mesh.decal = assets.load(decalFile);
+                                pipeline.decal = assets.load(decalFile);
                             }
                         }
                     }
@@ -55,7 +55,7 @@ public class PipelineLoader implements AssetLoader {
 
                 if(colors.containsKey(key)) {
                     color = colors.get(key);
-                    mesh.vertexColorEnabled = true;
+                    pipeline.vertexColorEnabled = true;
 
                     Log.log(1, "setting obj mesh vertex color enabled = true");
                 }
@@ -78,15 +78,15 @@ public class PipelineLoader implements AssetLoader {
                     Vector2f t = tList.get(tI);
                     Vector3f n = nList.get(nI);
 
-                    mesh.pushVertex(v.x, v.y, v.z, t.x, t.y, n.x, n.y, n.z, color.x, color.y, color.z);
+                    pipeline.pushVertex(v.x, v.y, v.z, t.x, t.y, n.x, n.y, n.z, color.x, color.y, color.z);
 
                     indices[i - 1] = vCount++;
                 }
-                mesh.pushFace(indices);
+                pipeline.pushFace(indices);
             }
         }
-        mesh.buffer();
+        pipeline.buffer();
 
-        return mesh;
+        return pipeline;
     }
 }

@@ -113,7 +113,7 @@ public class Editor extends Demo {
         }
 
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
-        pushInfo(app, null);
+        pushInfo(app, null, scene, false);
         game.getSpritePipeline().end();
         manager.begin();
         manager.moveTo(10, 10);

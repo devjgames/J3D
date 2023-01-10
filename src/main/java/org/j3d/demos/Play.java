@@ -35,7 +35,7 @@ public class Play extends Demo {
         collider.radius = scene.playerRadius;
         collider.addTriangleSelector(scene);
 
-        logic.init(app, scene, collider, fpsCamera);
+        logic.init(this, app, scene, collider, fpsCamera);
 
         start.set(scene.playerPosition);
         if(fpsCamera) {
@@ -54,7 +54,7 @@ public class Play extends Demo {
 
         scene.render(projection, view, fpsCamera);
         game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
-        pushInfo(app, collider);
+        pushInfo(app, collider, scene, fpsCamera);
         game.getSpritePipeline().end();
         game.nextFrame();
 
@@ -115,7 +115,7 @@ public class Play extends Demo {
             }
             scene.playerOffset.normalize().mul(length);
         }
-        logic.update(app, scene, collider, fpsCamera);
+        logic.update(this, app, scene, collider, fpsCamera);
 
         return !game.isKeyDown(GLFW.GLFW_KEY_ESCAPE);
     }

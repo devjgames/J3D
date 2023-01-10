@@ -26,7 +26,7 @@ public class Scene implements TriangleSelector {
         public final Vector3f position = new Vector3f();
         public float rotationDegrees = 0;
         public final float scale;
-        public Object tag = null;
+        public Object data = null;
 
         public Mesh(LightPipeline pipeline, float scale) {
             selector = new PipelineTriangleSelector(pipeline);
@@ -71,6 +71,7 @@ public class Scene implements TriangleSelector {
     private final Vector<Mesh> meshes = new Vector<>();
     private final Vector3f target = new Vector3f();
     private final Vector3f eye = new Vector3f();
+    private int binds = 0;
 
     public Scene(Game game, String name) throws Exception {
         String[] lines = new String(IO.readAllBytes(IO.file(IO.file("assets/scenes"), name + ".sh"))).split("\\n+");
@@ -135,6 +136,10 @@ public class Scene implements TriangleSelector {
                 mesh.rotationDegrees = Parser.parse(tokens, 5, 0.0f);
                 mesh.setTransform();
 
+                if(!lightingEnabled) {
+                    pipeline.ambientColor.set(1, 1, 1, 1);
+                }
+
                 meshes.add(mesh);
 
                 if(!meshGroups.containsKey(tokens[1])) {
@@ -151,6 +156,10 @@ public class Scene implements TriangleSelector {
 
         playerPipeline = game.getAssets().load(IO.file(IO.file(IO.file("assets/meshes"), meshSet), "player.obj"));
         zeroCenter(playerPipeline);
+    }
+
+    public int getBinds() {
+        return binds;
     }
 
     public int getMeshCount() {
@@ -193,6 +202,8 @@ public class Scene implements TriangleSelector {
             view.identity().lookAt(eye, playerPosition, up);
         }
 
+        binds = 0;
+
         Utils.clear(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
         while(names.hasMoreElements()) {
             String name = names.nextElement();
@@ -201,9 +212,6 @@ public class Scene implements TriangleSelector {
             group.get(0).selector.pipeline.lights.clear();
             if(lightingEnabled) {
                 group.get(0).selector.pipeline.lights.addAll(lights);
-                group.get(0).selector.pipeline.ambientColor.set(0.2f, 0.2f, 0.2f, 1);
-            } else {
-                group.get(0).selector.pipeline.ambientColor.set(1, 1, 1, 1);
             }
             group.get(0).selector.begin(projection, view);
             for(Mesh mesh : group) {
@@ -211,6 +219,7 @@ public class Scene implements TriangleSelector {
                 mesh.selector.render();
             }
             group.get(0).selector.end();
+            binds++;
         }
         if(!fpsCamera) {
             playerPipeline.lights.clear();

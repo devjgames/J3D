@@ -16,9 +16,11 @@ public abstract class Demo {
 
     public abstract boolean run(App app) throws Exception;
 
-    public void pushInfo(App app, Collider collider) {
+    public void pushInfo(App app, Collider collider, Scene scene, boolean drawCrossHair) {
         Game game = app.getGame();
         Font font = app.getFont();
+        int w = game.getRenderTargetWidth();
+        int h = game.getRenderTargetHeight();
 
         String info = "FPS=" + game.getFPS() + ", ";
 
@@ -26,6 +28,9 @@ public abstract class Demo {
         info += "ALC=" + Utils.getAllocated() + ", ";
         if(collider != null) {
             info += "TST=" + collider.getTested() + ", ";
+        }
+        if(scene != null) {
+            info += "BND=" + scene.getBinds() + ", ";
         }
         info += "ESC=Quit";
 
@@ -36,6 +41,18 @@ public abstract class Demo {
             5, 10, game.getRenderTargetHeight() - 10 - font.getCharHeight(), 
             1, 1, 1, 1
             );
+        if(drawCrossHair) {
+            game.getSpritePipeline().push(
+                font.getWhiteX(), font.getWhiteY(), 1, 1, 
+                w / 2 - 8, h / 2, 17, 1, 
+                1, 1, 1, 1, false
+                );
+            game.getSpritePipeline().push(
+                font.getWhiteX(), font.getWhiteY(), 1, 1, 
+                w / 2, h / 2 - 8, 1, 18, 
+                1, 1, 1, 1, false)
+                ;
+        }
         game.getSpritePipeline().endSprite();
     }
 

@@ -2,7 +2,7 @@
 mesh-set dungeon
 
 # player x y z off-x off-y off-z scale speed radius
-player 12.319013 32.0 18.059626 50.861996 6.1154194 71.5204 1.0 0.0 -1.0 20.0 50.0 8.0
+player 19.167706 32.0 28.4006 24.10146 59.956257 64.03333 1.0 0.0 -1.0 20.0 50.0 8.0
 
 # scale s
 scale 16.0
@@ -86,13 +86,18 @@ mesh pit-edge -112.0 0.0 -176.0 90.0
 mesh pit-corner-r -136.0 0.0 -176.0 90.0
 mesh corner-out -144.0 0.0 -144.0 270.0
 mesh corner-in -168.0 0.0 -136.0 270.0
-mesh pit-side-tall -88.0 0.0 -208.0 270.0
-mesh pit-side-tall -136.0 0.0 -208.0 90.0
-mesh pit-corner-r -88.0 0.0 -240.0 270.0
 mesh pit-corner-l -136.0 0.0 -240.0 270.0
 mesh pit-edge -112.0 0.0 -240.0 270.0
 mesh corner-in -136.0 0.0 -264.0 270.0
 mesh corner-in -88.0 0.0 -264.0 180.0
 mesh side -112.0 0.0 -264.0 180.0
 mesh pit-flat1 -112.0 0.0 -208.0 0.0
+mesh pit-side-tall -136.0 0.0 -208.0 270.0
+mesh pit-side-tall -88.0 0.0 -208.0 90.0
+mesh pit-corner-r -88.0 0.0 -240.0 270.0
+mesh iron-bridge -112.0 0.0 -184.0 90.0
+mesh iron-bridge -112.0 0.0 -232.0 90.0
+mesh wood-bridge -112.0 0.0 -208.0 90.0
+mesh door-top 32.0 0.0 -64.0 90.0
+mesh door-bottom 32.0 0.0 -64.0 90.0
 

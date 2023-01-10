@@ -99,9 +99,7 @@ public class App {
         new App().run(
             new Editor(),
             new Play("scene1", new Logic(), true),
-            new Play("scene1", new Logic(), false),
-            new Play("scene2", new Logic(), true),
-            new Play("scene2", new Logic(), false)
+            new Play("scene1", new Logic(), false)
         );
     }
 }
