@@ -34,7 +34,7 @@ public class App {
     public void run(Demo ... list) throws Exception {
         try {
             game = new Game(1000, 800, 0, false);
-            font = game.getResources().manage(new Font(IO.file("assets/pics/font.fnt")));
+            font = game.getResources().manage(new Font(IO.file("assets/pics/font.fnt"), game));
             manager = new UIManager(game, font);
             GLFW.glfwSwapInterval(1);
 

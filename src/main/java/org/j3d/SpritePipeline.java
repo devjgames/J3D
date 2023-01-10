@@ -22,8 +22,9 @@ public class SpritePipeline extends Resource {
     private int uTexture;
     private Pipeline pipeline;
     private Matrix4f projection = new Matrix4f();
+    private Game game;
 
-    public SpritePipeline() throws Exception {
+    public SpritePipeline(Game game) throws Exception {
         vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
         veo = GL15.glGenBuffers();
@@ -36,6 +37,7 @@ public class SpritePipeline extends Resource {
         );
         uProjection = pipeline.getUniformLocation("uProjection");
         uTexture = pipeline.getUniformLocation("uTexture");
+        this.game = game;
     }
 
     public void begin(int width, int height) {
@@ -138,27 +140,30 @@ public class SpritePipeline extends Resource {
         }
     }
 
-    public void push(String text, int cw, int ch, int cols, int lineSpacing, int x, int y, float r, float g, float b, float a) {
+    public void push(String text, int scale, int cw, int ch, int cols, int lineSpacing, int x, int y, float r, float g, float b, float a) {
         int sx = x;
+
         for (int i = 0; i != text.length(); i++) {
             char c = text.charAt(i);
             if (c == '\n') {
-                x = sx;
-                y += lineSpacing + (int)(ch);
+                x = sx * scale;
+                y += lineSpacing + (int)(ch * scale);
             } else {
                 int j = (int) c - (int) ' ';
                 if (j >= 0 && j < 100) {
                     int sr = j / cols;
                     int sc = j % cols;
-                    push(sc * cw, sr * ch, cw, ch, x, y, cw, ch, r, g, b, a, false);
-                    x += cw;
+                    push(sc * cw, sr * ch, cw, ch, x, y, cw * scale, ch * scale, r, g, b, a, false);
+                    x += cw * scale;
                 }
             }
         }
     }
 
     public void push(Font font, String text, int lineSpacing, int x, int y, float r, float g, float b, float a) {
-        push(text, font.getCharWidth(), font.getCharHeight(), font.getColumns(), lineSpacing, x, y, r, g, b, a);
+        int s = game.getScale();
+
+        push(text, s, font.getCharWidth() / s, font.getCharHeight() / s, font.getColumns(), lineSpacing, x, y, r, g, b, a);
     }
 
     public void endSprite() {

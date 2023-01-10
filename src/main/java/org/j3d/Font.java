@@ -12,7 +12,7 @@ public class Font extends Resource implements Asset {
     private int whiteX;
     private int whiteY;
 
-    public Font(File file) throws Exception {
+    public Font(File file, Game game) throws Exception {
         String[] lines = new String(IO.readAllBytes(file)).split("\\n+");
 
         this.file = file;
@@ -44,6 +44,8 @@ public class Font extends Resource implements Asset {
         if(texture == null || cw <= 0 || ch <= 0 || cols <= 0 || whiteX < 0 || whiteY < 0) {
             throw new Exception("invalid font file");
         }
+        cw *= game.getScale();
+        ch *= game.getScale();
     }
 
     @Override

@@ -26,7 +26,8 @@ public class Scene implements TriangleSelector {
         public final Vector3f position = new Vector3f();
         public float rotationDegrees = 0;
         public final float scale;
-        public Object data = null;
+        public Animator animator = null;
+        public boolean visible = true;
 
         public Mesh(LightPipeline pipeline, float scale) {
             selector = new PipelineTriangleSelector(pipeline);
@@ -45,6 +46,16 @@ public class Scene implements TriangleSelector {
             mesh.setTransform();
 
             return mesh;
+        }
+    }
+
+    private static class MeshConfig {
+        public final boolean collidable;
+        public final boolean cameraCollidable;
+
+        public MeshConfig(boolean collidable, boolean cameraCollidable) {
+            this.collidable = collidable;
+            this.cameraCollidable = cameraCollidable;
         }
     }
 
@@ -67,7 +78,7 @@ public class Scene implements TriangleSelector {
 
     private final Hashtable<String, Vector<Mesh>> meshGroups = new Hashtable<>();
     private boolean enabled = true;
-    private final Hashtable<String, Boolean> meshCollidable = new Hashtable<>();
+    private final Hashtable<String, MeshConfig> meshConfig = new Hashtable<>();
     private final Vector<Mesh> meshes = new Vector<>();
     private final Vector3f target = new Vector3f();
     private final Vector3f eye = new Vector3f();
@@ -112,12 +123,22 @@ public class Scene implements TriangleSelector {
             } else if(tline.startsWith("background ")) {
                 Parser.parse(tokens, 1, backgroundColor);
             } else if(tline.startsWith("mesh-cfg ")) {
-                meshCollidable.put(tokens[1], Parser.parse(tokens, 2, true));
+                meshConfig.put(
+                    tokens[1], 
+                    new MeshConfig(
+                        Parser.parse(tokens, 2, true),
+                         Parser.parse(tokens, 3, true)
+                    )
+                );
             } else if(tline.startsWith("mesh ")) {
                 boolean collidable = true;
+                boolean cameraCollidable = true;
 
-                if(meshCollidable.containsKey(tokens[1])) {
-                    collidable = meshCollidable.get(tokens[1]);
+                if(meshConfig.containsKey(tokens[1])) {
+                    MeshConfig config = meshConfig.get(tokens[1]);
+
+                    collidable = config.collidable;
+                    cameraCollidable = config.cameraCollidable;
                 }
 
                 LightPipeline pipeline = game.getAssets().load(
@@ -128,6 +149,9 @@ public class Scene implements TriangleSelector {
                 zeroCenter(pipeline);
 
                 mesh.selector.setEnabled(collidable);
+                if(!cameraCollidable) {
+                    mesh.selector.pipeline.triangleTag = 2;
+                }
                 mesh.position.set(
                     Parser.parse(tokens, 2, 0.0f), 
                     Parser.parse(tokens, 3, 0.0f),
@@ -215,8 +239,10 @@ public class Scene implements TriangleSelector {
             }
             group.get(0).selector.begin(projection, view);
             for(Mesh mesh : group) {
-                mesh.setTransform();
-                mesh.selector.render();
+                if(mesh.visible) {
+                    mesh.setTransform();
+                    mesh.selector.render();
+                }
             }
             group.get(0).selector.end();
             binds++;
@@ -276,7 +302,7 @@ public class Scene implements TriangleSelector {
     
     public void save() throws IOException {
         StringBuilder b = new StringBuilder(1000);
-        Enumeration<String> keys = meshCollidable.keys();
+        Enumeration<String> keys = meshConfig.keys();
 
         b.append("# mesh-set name\n");
         b.append("mesh-set " + meshSet + "\n");
@@ -319,13 +345,13 @@ public class Scene implements TriangleSelector {
         b.append("background-color " + Parser.toString(backgroundColor) + "\n");
         b.append("\n");
 
-        b.append("# mesh-cfg name collidable\n");
+        b.append("# mesh-cfg name collidable camera-collidable\n");
         b.append("# ...\n");
         while(keys.hasMoreElements()) {
             String key = keys.nextElement();
-            boolean collidable = meshCollidable.get(key);
+            MeshConfig config = meshConfig.get(key);
 
-            b.append("mesh-cfg " + key + " " + collidable + "\n");
+            b.append("mesh-cfg " + key + " " + config.collidable + " " + config.cameraCollidable + "\n");
         }
         b.append("\n");
 

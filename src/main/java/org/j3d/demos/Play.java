@@ -53,7 +53,7 @@ public class Play extends Demo {
         projection.identity().perspective(Utils.toRadians(60), game.getAspectRatio(), 0.25f, 10000);
 
         scene.render(projection, view, fpsCamera);
-        game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
+        game.getSpritePipeline().begin(game.getFramebufferWidth(), game.getFramebufferHeight());
         pushInfo(app, collider, scene, fpsCamera);
         game.getSpritePipeline().end();
         game.nextFrame();
@@ -75,8 +75,8 @@ public class Play extends Demo {
                 Utils.rotateOffsetAndUp(scene.playerOffset, scene.up, game);
             }
 
-            float dx = game.getMouseX() - game.getRenderTargetWidth() / 2;
-            float dy = game.getMouseY() - game.getRenderTargetHeight() / 2;
+            float dx = game.getMouseX() - game.getFramebufferWidth() / 2;
+            float dy = game.getMouseY() - game.getFramebufferHeight() / 2;
             float dl = Vector2f.length(dx, dy);
 
             f.set(scene.playerOffset).mul(1, 0, 1);

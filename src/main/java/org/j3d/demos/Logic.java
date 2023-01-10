@@ -23,11 +23,21 @@ public class Logic {
             if(name.equals("wood-bridge")) {
                 mesh.position.y = 32;
                 mesh.setTransform();
-                mesh.data = new Animator(mesh, -32);
+                mesh.animator = new Animator(mesh, -32);
             } else if(name.equals("door-bottom")) {
-                mesh.data = new Animator(mesh, -64);
-            } else if(name.equalsIgnoreCase("door-top")) {
-                mesh.data = new Animator(mesh, 64);
+                mesh.animator = new Animator(mesh, -64);
+                for(int j = 0; j != scene.getMeshCount(); j++) {
+                    Mesh mesh2 = scene.meshAt(j);
+
+                    name = IO.fileNameWithOutExtension(mesh2.selector.pipeline.getFile());
+                    if(name.equals("door-top")) {
+                        if(mesh.position.distance(mesh2.position) < 44) {
+                            mesh2.animator = new Animator(mesh2, 64);
+                            mesh2.animator.join = mesh.animator;
+                            mesh.animator.join = mesh2.animator;
+                        }
+                    }
+                }
             }
         }
         spaceDown = false;
@@ -40,8 +50,8 @@ public class Logic {
             collider.origin.set(scene.playerPosition);
             collider.direction.set(scene.playerDirection);
         } else {
-            int w = game.getRenderTargetWidth();
-            int h = game.getRenderTargetHeight();
+            int w = game.getFramebufferWidth();
+            int h = game.getFramebufferHeight();
             int x = game.getMouseX();
             int y = h - game.getMouseY() - 1;
 
@@ -66,14 +76,24 @@ public class Logic {
 
         if(mesh != null) {
             mesh.selector.pipeline.ambientColor.set(4, 3, 4, 1);
+            for(int i = 0; i != scene.getMeshCount(); i++) {
+                Mesh mesh2 = scene.meshAt(i);
+
+                if(mesh2.animator == mesh.animator.join && mesh2.animator != null) {
+                    mesh2.selector.pipeline.ambientColor.set(4, 3, 4, 1);
+                }
+            }
             if(down) {
-                ((Animator)mesh.data).start();
+                mesh.animator.start();
+                if(mesh.animator.join != null) {
+                    mesh.animator.join.start();
+                }
             }
         }
         for(int i = 0; i != scene.getMeshCount(); i++) {
             mesh = scene.meshAt(i);
-            if(mesh.data instanceof Animator) {
-                ((Animator)mesh.data).animate(game);
+            if(mesh.animator != null) {
+                mesh.animator.animate(game);
             }
         }
     }
@@ -104,8 +124,8 @@ public class Logic {
                 for(int j = 0; j != mesh.selector.pipeline.getTriangleCount(); j++) {
                     mesh.selector.pipeline.triangleAt(j, triangle);
                     if(triangle.intersects(collider.origin, collider.direction, 0, collider.time)) {
-                        if(mesh.data instanceof Animator) {
-                            if(((Animator)mesh.data).getDone()) {
+                        if(mesh.animator != null) {
+                            if(mesh.animator.getDone()) {
                                 hit = mesh;
                             }
                         }

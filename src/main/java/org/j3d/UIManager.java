@@ -182,7 +182,7 @@ public class UIManager {
     }
 
     public boolean end() {
-        game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
+        game.getSpritePipeline().begin(game.getFramebufferWidth(), game.getFramebufferHeight());
         for(UIControl control : stack) {
             if(control.isVisible()) {
                 game.getSpritePipeline().beginSprite(font);

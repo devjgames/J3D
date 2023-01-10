@@ -47,6 +47,7 @@ public class Editor extends Demo {
     private float[] time = new float[1];
     private BoundingBox bounds = new BoundingBox();
     private Triangle triangle = new Triangle();
+    private Mesh deletePreview;
 
 
     @Override
@@ -72,6 +73,7 @@ public class Editor extends Demo {
         showMeshes = false;
         snap = 8;
         resetSnap = true;
+        deletePreview = null;
     }
 
     @Override
@@ -85,8 +87,8 @@ public class Editor extends Demo {
         if(scene != null) {
             scene.render(projection, view, false);
             if(mode == 3) {
-                int w = game.getRenderTargetWidth();
-                int h = game.getRenderTargetHeight();
+                int w = game.getFramebufferWidth();
+                int h = game.getFramebufferHeight();
                 int x = game.getMouseX();
                 int y = h - game.getMouseY() - 1;
 
@@ -112,7 +114,7 @@ public class Editor extends Demo {
             Utils.clear(0, 0, 0, 1);
         }
 
-        game.getSpritePipeline().begin(game.getRenderTargetWidth(), game.getRenderTargetHeight());
+        game.getSpritePipeline().begin(game.getFramebufferWidth(), game.getFramebufferHeight());
         pushInfo(app, null, scene, false);
         game.getSpritePipeline().end();
         manager.begin();
@@ -174,6 +176,7 @@ public class Editor extends Demo {
                     );
                 mesh = new Mesh(pipeline, scene.scale);
                 showScenes = false;
+                deletePreview = null;
 
                 Scene.zeroCenter(mesh.selector.pipeline);
             }
@@ -188,6 +191,54 @@ public class Editor extends Demo {
         game.nextFrame();
 
         if(!handled && scene != null) {
+            Mesh hit = null;
+
+            if(deletePreview != null) {
+                deletePreview.visible = true;
+            }
+            if(mode == 4) {
+                int w = game.getFramebufferWidth();
+                int h = game.getFramebufferHeight();
+                int x = game.getMouseX();
+                int y = h - game.getMouseY() - 1;
+
+                Utils.unProject(x, y, 0, 0, 0, w, h, projection, view, origin);
+                Utils.unProject(x, y, 1, 0, 0, w, h, projection, view, direction);
+        
+                direction.sub(origin).normalize();
+                time[0] = Float.MAX_VALUE;
+        
+                for(int i = 0; i != scene.getMeshCount(); i++) {
+                    Mesh iMesh = scene.meshAt(i);
+                    float t = time[0];
+        
+                    bounds.min.set(iMesh.selector.pipeline.getBounds().min);
+                    bounds.max.set(iMesh.selector.pipeline.getBounds().max);
+                    bounds.transform(iMesh.selector.model);
+                    bounds.min.sub(1, 1, 1);
+                    bounds.max.add(1, 1, 1);
+                    time[0] = Float.MAX_VALUE;
+                    if(bounds.intersects(origin, direction, time)) {
+                        time[0] = t;
+                        iMesh.selector.pipeline.model.set(iMesh.selector.model);
+                        for(int j = 0; j != iMesh.selector.pipeline.getTriangleCount(); j++) {
+                            iMesh.selector.pipeline.triangleAt(j, triangle);
+                            if(triangle.n.dot(direction) < 0) {
+                                if(triangle.intersects(origin, direction, 0, time)) {
+                                    hit = iMesh;
+                                }
+                            }
+                        }
+                    } else {
+                        time[0] = t;
+                    }
+                }
+                deletePreview = null;
+                if(hit != null) {
+                    deletePreview = hit;
+                    deletePreview.visible = false;
+                }
+            }
             if(game.isButtonDown(0)) {
                 if(mode == 0) {
                     float length = scene.playerOffset.length();
@@ -206,51 +257,19 @@ public class Editor extends Demo {
                         f.mul(dy).add(r);
                         scene.playerPosition.add(f);
                     }
-                } else if(!down) {
+                } else {
                     if(mode == 3) {
-                        int s = Math.max(1, snap);
+                        if(!down) {
+                            int s = Math.max(1, snap);
 
-                        mesh.position.x = (int)Math.round(mesh.position.x / s) * s;
-                        mesh.position.z = (int)Math.round(mesh.position.z / s) * s;
-                        scene.add(mesh);
-                    } else  if(mode == 4) {
-                        int w = game.getRenderTargetWidth();
-                        int h = game.getRenderTargetHeight();
-                        int x = game.getMouseX();
-                        int y = h - game.getMouseY() - 1;
-                        Mesh hit = null;
-
-                        Utils.unProject(x, y, 0, 0, 0, w, h, projection, view, origin);
-                        Utils.unProject(x, y, 1, 0, 0, w, h, projection, view, direction);
-
-                        direction.sub(origin).normalize();
-                        time[0] = Float.MAX_VALUE;
-
-                        for(int i = 0; i != scene.getMeshCount(); i++) {
-                            Mesh iMesh = scene.meshAt(i);
-                            float t = time[0];
-
-                            bounds.min.set(iMesh.selector.pipeline.getBounds().min);
-                            bounds.max.set(iMesh.selector.pipeline.getBounds().max);
-                            bounds.transform(iMesh.selector.model);
-                            bounds.min.sub(1, 1, 1);
-                            bounds.max.add(1, 1, 1);
-                            time[0] = Float.MAX_VALUE;
-                            if(bounds.intersects(origin, direction, time)) {
-                                time[0] = t;
-                                iMesh.selector.pipeline.model.set(iMesh.selector.model);
-                                for(int j = 0; j != iMesh.selector.pipeline.getTriangleCount(); j++) {
-                                    iMesh.selector.pipeline.triangleAt(j, triangle);
-                                    if(triangle.intersects(origin, direction, 0, time)) {
-                                        hit = iMesh;
-                                    }
-                                }
-                            } else {
-                                time[0] = t;
-                            }
+                            mesh.position.x = (int)Math.round(mesh.position.x / s) * s;
+                            mesh.position.z = (int)Math.round(mesh.position.z / s) * s;
+                            scene.add(mesh);
                         }
-                        if(hit != null) {
+                    } else  if(mode == 4) {
+                        if(!down && hit != null) {
                             scene.remove(hit);
+                            deletePreview = null;
                         }
                     }
                 }

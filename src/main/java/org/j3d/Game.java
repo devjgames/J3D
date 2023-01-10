@@ -85,8 +85,8 @@ public class Game {
 
         resources = new ResourceManager();
 
-        assets = resources.manage(new AssetManager());
-        spritePipeline = resources.manage(new SpritePipeline());
+        assets = resources.manage(new AssetManager(this));
+        spritePipeline = resources.manage(new SpritePipeline(this));
 
         lx = getMouseX();
         ly = getMouseY();
@@ -162,20 +162,16 @@ public class Game {
         return fps;
     }
 
-    public int getRenderTargetWidth() {
-        return getWidth();
+    public int getScale() {
+        return getFramebufferWidth() / getWidth();
     }
 
-    public int getRenderTargetHeight() {
-        return getHeight();
-    }
-
-    private int getWidth() {
+    public int getWidth() {
         GLFW.glfwGetWindowSize(window, ww, wh);
         return ww[0];
     }
 
-    private int getHeight() {
+    public int getHeight() {
         GLFW.glfwGetWindowSize(window, ww, wh);
         return wh[0];
     }
@@ -196,12 +192,12 @@ public class Game {
 
     public int getMouseX() {
         GLFW.glfwGetCursorPos(window, x, y);
-        return (int) x[0];
+        return (int) x[0] * getScale();
     }
 
     public int getMouseY() {
         GLFW.glfwGetCursorPos(window, x, y);
-        return (int) y[0];
+        return (int) y[0] * getScale();
     }
 
     public int getDeltaX() {
@@ -233,7 +229,7 @@ public class Game {
         if (!GLFW.glfwWindowShouldClose(window)) {
             GLFW.glfwPollEvents();
             GL11.glViewport(0, 0, getFramebufferWidth(), getFramebufferHeight());
-            
+
             return true;
         }
         return false;

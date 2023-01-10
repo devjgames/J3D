@@ -19,8 +19,8 @@ public abstract class Demo {
     public void pushInfo(App app, Collider collider, Scene scene, boolean drawCrossHair) {
         Game game = app.getGame();
         Font font = app.getFont();
-        int w = game.getRenderTargetWidth();
-        int h = game.getRenderTargetHeight();
+        int w = game.getFramebufferWidth();
+        int h = game.getFramebufferHeight();
 
         String info = "FPS=" + game.getFPS() + ", ";
 
@@ -38,18 +38,20 @@ public abstract class Demo {
         game.getSpritePipeline().push(
             font, 
             info, 
-            5, 10, game.getRenderTargetHeight() - 10 - font.getCharHeight(), 
+            5, 10, game.getFramebufferHeight() - 10 - font.getCharHeight(), 
             1, 1, 1, 1
             );
         if(drawCrossHair) {
+            int s = game.getScale();
+
             game.getSpritePipeline().push(
                 font.getWhiteX(), font.getWhiteY(), 1, 1, 
-                w / 2 - 8, h / 2, 17, 1, 
+                w / 2 - 8 * s, h / 2, 17 * s, 1, 
                 1, 1, 1, 1, false
                 );
             game.getSpritePipeline().push(
                 font.getWhiteX(), font.getWhiteY(), 1, 1, 
-                w / 2, h / 2 - 8, 1, 18, 
+                w / 2, h / 2 - 8 * s, 1, 18 * s, 
                 1, 1, 1, 1, false)
                 ;
         }

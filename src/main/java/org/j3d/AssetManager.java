@@ -6,17 +6,21 @@ import java.util.Hashtable;
 
 public class AssetManager extends Resource {
 
+    public final Game game;
+
     private final ResourceManager resources = new ResourceManager();
     private final Hashtable<String, Object> assets = new Hashtable<>();
     private final Hashtable<String, AssetLoader> assetLoaders = new Hashtable<>();
 
-    public AssetManager() {
+    public AssetManager(Game game) {
         registerAssetLoader(".png", new TextureLoader());
         registerAssetLoader(".jpeg", new TextureLoader());
         registerAssetLoader(".jpg", new TextureLoader());
         registerAssetLoader(".wav", new SoundLoader());
         registerAssetLoader(".fnt", new FontLoader());
         registerAssetLoader(".obj", new PipelineLoader());
+
+        this.game = game;
     }
 
     public ResourceManager getResources() {

@@ -6,6 +6,7 @@ import org.j3d.demos.Scene.Mesh;
 public class Animator {
     
     public final Mesh mesh;
+    public Animator join;
     
     private int amount;
     private boolean done = true;

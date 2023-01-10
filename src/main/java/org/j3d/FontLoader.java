@@ -6,7 +6,7 @@ public class FontLoader implements AssetLoader {
 
     @Override
     public Object load(File file, AssetManager assets) throws Exception {
-        return new Font(file);
+        return new Font(file, assets.game);
     }
     
 }
