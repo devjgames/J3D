@@ -154,7 +154,7 @@ public class Editor extends Demo {
             if((result = manager.list("Editor-scene-list", 0, sceneNames, 20, 8, selScene)) != null) {
                 game.getAssets().clear();
                 Utils.clearConsole();
-                scene = new Scene(game, sceneNames.get((Integer)result));
+                scene = new Scene(game, sceneNames.get((Integer)result), true);
                 selMesh = 0;
 
                 File[] list = IO.file(IO.file("assets/meshes"), scene.meshSet).listFiles();

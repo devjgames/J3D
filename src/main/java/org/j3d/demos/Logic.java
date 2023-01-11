@@ -4,10 +4,12 @@ import org.j3d.BoundingBox;
 import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.IO;
+import org.j3d.Sound;
 import org.j3d.TexturePipeline;
 import org.j3d.Triangle;
 import org.j3d.Utils;
 import org.j3d.demos.Scene.Mesh;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 public class Logic {
@@ -15,8 +17,11 @@ public class Logic {
     private final Triangle triangle = new Triangle();
     private final BoundingBox bounds = new BoundingBox();
     private boolean spaceDown;
+    private Sound sound;
     
     public void init(Demo demo, App app, Scene scene, Collider collider, boolean fpsCamera) throws Exception {
+        Game game = app.getGame();
+
         for(int i = 0; i != scene.getMeshCount(); i++) {
             Mesh mesh = scene.meshAt(i);
             String name = IO.fileNameWithOutExtension(mesh.selector.pipeline.getFile());
@@ -39,9 +44,13 @@ public class Logic {
                         }
                     }
                 }
-            }
+            } 
         }
         spaceDown = false;
+
+        sound = game.getAssets().load(IO.file("assets/sounds/ambient.wav"));
+        sound.setVolume(0);
+        sound.play(true);
     }
 
     public void update(Demo demo, App app, Scene scene, Collider collider, boolean fpsCamera) throws Exception {
@@ -84,11 +93,29 @@ public class Logic {
                 }
             }
         }
+
+        Vector3f orb = null;
+        float min = Float.MAX_VALUE;
+
         for(int i = 0; i != scene.getMeshCount(); i++) {
             mesh = scene.meshAt(i);
-            if(mesh.animator != null) {
-                mesh.animator.animate(game);
+            String name = IO.fileNameWithOutExtension(mesh.selector.pipeline.getFile());
+
+            if(name.equals("orb")) {
+                float d = mesh.position.distance(scene.playerPosition);
+
+                if(d < min) {
+                    orb = mesh.position;
+                    min = d;
+                }
             }
+            if(mesh.animator != null) {
+                mesh.animator.animate(game, collider);
+            }
+        }
+
+        if(orb != null) {
+            sound.setVolume(1 - Math.min(orb.distance(scene.playerPosition) / 100, 1));
         }
     }
 

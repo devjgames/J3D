@@ -1,5 +1,6 @@
 package org.j3d.demos;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Vector;
 
 import org.j3d.BoundingBox;
 import org.j3d.Collider;
+import org.j3d.DepthState;
 import org.j3d.Game;
 import org.j3d.IO;
 import org.j3d.TexturePipeline;
@@ -92,9 +94,6 @@ public class Scene implements TriangleSelector {
     public final float playerSpeed;
     public final float playerRadius;
     public final float scale;
-    public final boolean textureLinear;
-    public final boolean textureClampToEdge;
-    public final TexturePipeline playerPipeline;
     public final Vector4f backgroundColor = new Vector4f(0, 0, 0, 1);
     
     private final Hashtable<String, Vector<Mesh>> meshGroups = new Hashtable<>();
@@ -106,16 +105,18 @@ public class Scene implements TriangleSelector {
     private Hashtable<String, MeshConfig> meshConfig = new Hashtable<>();
     private final HashSet<String> updated = new HashSet<>();
     private boolean insetTextureCoordinates = true;
+    private boolean textureLinear = false;
+    private boolean textureClampToEdge = false;
+    private TexturePipeline playerPipeline;
+    private TexturePipeline skyPipeline = null;
 
-    public Scene(Game game, String name) throws Exception {
+    public Scene(Game game, String name, boolean inDesign) throws Exception {
         String[] lines = new String(IO.readAllBytes(IO.file(IO.file("assets/scenes"), name + ".sh"))).split("\\n+");
         String meshSet = "";
         float playerScale = 1;
         float playerSpeed = 0;
         float scale = 1;
         float playerRadius = 1;
-        boolean textureLinear = false;
-        boolean textureClampToEdge = false;
 
         this.name = name;
 
@@ -193,11 +194,18 @@ public class Scene implements TriangleSelector {
         this.playerSpeed = playerSpeed;
         this.playerRadius = playerRadius;
         this.scale = scale;
-        this.textureLinear = textureLinear;
-        this.textureClampToEdge = textureClampToEdge;
 
         playerPipeline = game.getAssets().load(IO.file(IO.file(IO.file("assets/meshes"), meshSet), "player.obj"));
         updateVertices(playerPipeline);
+
+        if(!inDesign) {
+            File file = IO.file(IO.file(IO.file("assets/meshes"), meshSet), "sky.obj");
+
+            if(file.exists()) {
+                skyPipeline = game.getAssets().load(file);
+                updateVertices(skyPipeline);
+            }
+        }
     }
 
     public int getBinds() {
@@ -243,6 +251,7 @@ public class Scene implements TriangleSelector {
         if(fpsCamera) {
             playerPosition.add(playerDirection, target);
             view.identity().lookAt(playerPosition, target, up);
+            eye.set(playerPosition);
         } else {
             playerPosition.add(playerOffset, eye);
             view.identity().lookAt(eye, playerPosition, up);
@@ -251,6 +260,13 @@ public class Scene implements TriangleSelector {
         binds = 0;
 
         Utils.clear(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
+
+        if(skyPipeline != null) {
+            Utils.setDepthState(DepthState.NONE);
+            skyPipeline.setTransform(eye.x, eye.y, eye.z, 0, 0, 0, 1);
+            skyPipeline.render();
+            Utils.setDepthState(DepthState.READ_WRITE);
+        }
         while(names.hasMoreElements()) {
             String name = names.nextElement();
             Vector<Mesh> group = meshGroups.get(name);
@@ -430,12 +446,12 @@ public class Scene implements TriangleSelector {
                         float x = pipeline.vertexAt(k, 3);
                         float y = pipeline.vertexAt(k, 4);
 
-                        if(x > minx + 1.0f / w) {
+                        if(Math.abs(x - minx) > Math.abs(x - maxx)) {
                             x -= 1.0f / w * 0.05f;
                         } else {
                             x += 1.0f / w * 0.05f;
                         }
-                        if(y > miny + 1.0f / h) {
+                        if(Math.abs(y - miny) > Math.abs(y - maxy)) {
                             y -= 1.0f / h * 0.05f;
                         } else {
                             y += 1.0f / h * 0.05f;

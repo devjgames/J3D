@@ -30,7 +30,7 @@ public class Play extends Demo {
     public void init(App app) throws Exception {
         Game game = app.getGame();
 
-        scene = new Scene(game, name);
+        scene = new Scene(game, name, false);
         collider = new Collider();
         collider.radius = scene.playerRadius;
         collider.addTriangleSelector(scene);
@@ -109,11 +109,11 @@ public class Play extends Demo {
 
             collider.origin.set(scene.playerPosition);
             collider.direction.set(scene.playerOffset).mul(1, 0, 1).normalize();
-            collider.time[0] = length + (collider.radius - 1);
+            collider.time[0] = length + (collider.radius - 2);
             collider.intersectionBits = 1;
             collider.intersectionBuffer = 1;
             if(collider.intersect() != null) {
-                length = Math.min(length, collider.time[0]) - (collider.radius - 1);
+                length = Math.min(length, collider.time[0]) - (collider.radius - 2);
             }
             scene.playerOffset.mul(1, 0, 1).normalize().mul(length);
             scene.playerOffset.y = height + (fullLength - length);

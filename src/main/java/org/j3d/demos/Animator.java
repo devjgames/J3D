@@ -1,5 +1,6 @@
 package org.j3d.demos;
 
+import org.j3d.Collider;
 import org.j3d.Game;
 import org.j3d.demos.Scene.Mesh;
 
@@ -34,9 +35,14 @@ public class Animator {
         done = false;
     }
 
-    public void animate(Game game) throws Exception {
+    public void animate(Game game, Collider collider) throws Exception {
         if(!done) {
-            mesh.position.y += 50 * game.getElapsedTime() * direction;
+            float x = 50 * game.getElapsedTime() * direction;
+
+            if(Math.abs(x) > collider.radius * 0.5f) {
+                x = collider.radius * 0.5f * ((x < 0) ? -1 : 1);
+            }
+            mesh.position.y += x;
             if(Math.abs(mesh.position.y - y) > Math.abs(amount)) {
                 mesh.position.y = y + amount;
                 amount = -amount;
