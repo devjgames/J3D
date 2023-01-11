@@ -103,17 +103,21 @@ public class Play extends Demo {
             scene.up.set(0, 1, 0);
         }
         if(!fpsCamera) {
-            float length = 75;
+            float fullLength = 40;
+            float length = fullLength;
+            float height = 2;
 
             collider.origin.set(scene.playerPosition);
-            collider.direction.set(scene.playerOffset).normalize();
+            collider.direction.set(scene.playerOffset).mul(1, 0, 1).normalize();
             collider.time[0] = length + (collider.radius - 1);
             collider.intersectionBits = 1;
             collider.intersectionBuffer = 1;
             if(collider.intersect() != null) {
                 length = Math.min(length, collider.time[0]) - (collider.radius - 1);
             }
-            scene.playerOffset.normalize().mul(length);
+            scene.playerOffset.mul(1, 0, 1).normalize().mul(length);
+            scene.playerOffset.y = height + (fullLength - length);
+            scene.up.set(0, 1, 0);
         }
         logic.update(this, app, scene, collider, fpsCamera);
 

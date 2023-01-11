@@ -64,18 +64,11 @@ public class Logic {
         collider.time[0] = Float.MAX_VALUE;
 
         Mesh mesh = select(scene, collider);
-        boolean down = false;
-
-        if(game.isKeyDown(GLFW.GLFW_KEY_SPACE)) {
-            if(!spaceDown) {
-                down = true;
-            }
-            spaceDown = true;
-        } else {
-            spaceDown = false;
-        }
-
-        if(mesh != null && !game.isButtonDown(0) && !game.isButtonDown(1)) {
+        boolean wasDown = spaceDown;
+    
+        spaceDown = game.isKeyDown(GLFW.GLFW_KEY_SPACE);
+        
+        if(mesh != null && wasDown) {
             ((TexturePipeline)mesh.selector.pipeline).color.set(4, 3, 4, 1);
             for(int i = 0; i != scene.getMeshCount(); i++) {
                 Mesh mesh2 = scene.meshAt(i);
@@ -84,7 +77,7 @@ public class Logic {
                     ((TexturePipeline)mesh2.selector.pipeline).color.set(4, 3, 4, 1);
                 }
             }
-            if(down) {
+            if(!spaceDown) {
                 mesh.animator.start();
                 if(mesh.animator.join != null) {
                     mesh.animator.join.start();

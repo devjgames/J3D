@@ -141,10 +141,8 @@ public class Editor extends Demo {
                     TexturePipeline pipeline = game.getAssets().load(
                         IO.file(IO.file(IO.file("assets/meshes"), scene.meshSet), meshNames.get((Integer)result) + ".obj")
                         );
-                    mesh = new Mesh(pipeline, scene.scale);
+                    mesh = new Mesh(scene, pipeline, scene.scale);
                     showMeshes = false;
-
-                    Scene.updateVertices(mesh.selector.pipeline);
                 }
                 selMesh = -2;
                 gap = 5;
@@ -172,11 +170,9 @@ public class Editor extends Demo {
                 TexturePipeline pipeline = game.getAssets().load(
                     IO.file(IO.file(IO.file("assets/meshes"), scene.meshSet), meshNames.get(selMesh) + ".obj")
                     );
-                mesh = new Mesh(pipeline, scene.scale);
+                mesh = new Mesh(scene, pipeline, scene.scale);
                 showScenes = false;
                 deletePreview = null;
-
-                Scene.updateVertices(mesh.selector.pipeline);
             }
             selScene = -2;
             gap = 5;

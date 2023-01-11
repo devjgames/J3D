@@ -4,6 +4,9 @@ mesh-set dungeon
 # player x y z off-x off-y off-z dir-x dir-y dir-z scale speed radius
 player 11.215604 32.0 8.800894 14.077412 41.50219 45.21949 1.0 0.0 -1.0 20.0 50.0 8.0
 
+# texture linear clamp-to-edge inset-texture-coordinates
+texture false false true
+
 # scale s
 scale 16.0
 

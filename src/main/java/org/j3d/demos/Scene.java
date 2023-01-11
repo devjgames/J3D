@@ -24,6 +24,7 @@ import org.joml.Vector4f;
 public class Scene implements TriangleSelector {
 
     public static class Mesh {
+        public final Scene scene;
         public final PipelineTriangleSelector selector;
         public final Vector3f position = new Vector3f();
         public float rotationDegrees = 0;
@@ -33,9 +34,24 @@ public class Scene implements TriangleSelector {
 
         private final Vector4f color = new Vector4f();
 
-        public Mesh(TrianglePipeline pipeline, float scale) {
+        public Mesh(Scene scene, TrianglePipeline pipeline, float scale) {
+            this.scene = scene;
             selector = new PipelineTriangleSelector(pipeline);
             this.scale = scale;
+
+            scene.updateVertices(selector.pipeline);
+
+            for(Texture texture : ((TexturePipeline)pipeline).textures) {
+                if(texture != null) {
+                    texture.bind();
+                    if(scene.textureLinear) {
+                        texture.toLinear(scene.textureClampToEdge);
+                    } else {
+                        texture.toNearest(scene.textureClampToEdge);
+                    }
+                    texture.unBind();
+                }
+            }
         }
 
         public void setTransform() {
@@ -43,7 +59,7 @@ public class Scene implements TriangleSelector {
         }
 
         public Mesh newInstance() {
-            Mesh mesh = new Mesh(selector.pipeline, scale);
+            Mesh mesh = new Mesh(scene, selector.pipeline, scale);
 
             mesh.rotationDegrees = rotationDegrees;
             mesh.position.set(position);
@@ -64,8 +80,6 @@ public class Scene implements TriangleSelector {
         }
     }
 
-    private static final HashSet<String> updated = new HashSet<>();
-
     public final String name;
     public final String meshSet;
     public final Vector3f playerPosition = new Vector3f();
@@ -78,16 +92,20 @@ public class Scene implements TriangleSelector {
     public final float playerSpeed;
     public final float playerRadius;
     public final float scale;
+    public final boolean textureLinear;
+    public final boolean textureClampToEdge;
     public final TexturePipeline playerPipeline;
     public final Vector4f backgroundColor = new Vector4f(0, 0, 0, 1);
-
+    
     private final Hashtable<String, Vector<Mesh>> meshGroups = new Hashtable<>();
     private boolean enabled = true;
-    private final Hashtable<String, MeshConfig> meshConfig = new Hashtable<>();
     private final Vector<Mesh> meshes = new Vector<>();
     private final Vector3f target = new Vector3f();
     private final Vector3f eye = new Vector3f();
     private int binds = 0;
+    private Hashtable<String, MeshConfig> meshConfig = new Hashtable<>();
+    private final HashSet<String> updated = new HashSet<>();
+    private boolean insetTextureCoordinates = true;
 
     public Scene(Game game, String name) throws Exception {
         String[] lines = new String(IO.readAllBytes(IO.file(IO.file("assets/scenes"), name + ".sh"))).split("\\n+");
@@ -96,8 +114,8 @@ public class Scene implements TriangleSelector {
         float playerSpeed = 0;
         float scale = 1;
         float playerRadius = 1;
-
-        updated.clear();
+        boolean textureLinear = false;
+        boolean textureClampToEdge = false;
 
         this.name = name;
 
@@ -114,6 +132,10 @@ public class Scene implements TriangleSelector {
                 playerScale = Parser.parse(tokens, 10, playerScale);
                 playerSpeed = Parser.parse(tokens, 11, playerSpeed);
                 playerRadius = Parser.parse(tokens, 12, playerRadius);
+            } else if(tline.startsWith("texture ")) {
+                textureLinear = Parser.parse(tokens, 1, false);
+                textureClampToEdge = Parser.parse(tokens, 2, false);
+                insetTextureCoordinates = Parser.parse(tokens, 3, true);
             } else if(tline.startsWith("scale ")) {
                 scale = Parser.parse(tokens, 1, scale);
             } else if(tline.startsWith("background ")) {
@@ -123,7 +145,7 @@ public class Scene implements TriangleSelector {
                     tokens[1], 
                     new MeshConfig(
                         Parser.parse(tokens, 2, true),
-                         Parser.parse(tokens, 3, true)
+                        Parser.parse(tokens, 3, true)
                     )
                 );
             } else if(tline.startsWith("mesh ")) {
@@ -142,9 +164,7 @@ public class Scene implements TriangleSelector {
                 TexturePipeline pipeline = game.getAssets().load(
                     IO.file(IO.file(IO.file("assets/meshes"), meshSet), tokens[1] + ".obj")
                     );
-                Mesh mesh = new Mesh(pipeline, scale);
-
-                updateVertices(pipeline);
+                Mesh mesh = new Mesh(this, pipeline, scale);
 
                 mesh.selector.setEnabled(collidable);
                 if(!cameraCollidable) {
@@ -173,6 +193,8 @@ public class Scene implements TriangleSelector {
         this.playerSpeed = playerSpeed;
         this.playerRadius = playerRadius;
         this.scale = scale;
+        this.textureLinear = textureLinear;
+        this.textureClampToEdge = textureClampToEdge;
 
         playerPipeline = game.getAssets().load(IO.file(IO.file(IO.file("assets/meshes"), meshSet), "player.obj"));
         updateVertices(playerPipeline);
@@ -314,6 +336,10 @@ public class Scene implements TriangleSelector {
         );
         b.append("\n");
 
+        b.append("# texture linear clamp-to-edge inset-texture-coordinates\n");
+        b.append("texture " + textureLinear + " " + textureClampToEdge + " " + insetTextureCoordinates + "\n");
+        b.append("\n");
+
         b.append("# scale s\n");
         b.append("scale " + scale + "\n");
         b.append("\n");
@@ -355,7 +381,7 @@ public class Scene implements TriangleSelector {
         IO.writeAllBytes(b.toString().getBytes(), IO.file(IO.file("assets/scenes"), name + ".sh"));
     }
 
-    public static void updateVertices(TrianglePipeline pipeline) {
+    private void updateVertices(TrianglePipeline pipeline) {
         String name = IO.fileNameWithOutExtension(pipeline.getFile());
 
         if(updated.contains(name)) {
@@ -363,58 +389,60 @@ public class Scene implements TriangleSelector {
         }
         updated.add(name);
 
-        TexturePipeline texturePipeline = (TexturePipeline)pipeline;
-        
-        for(int i = 0; i != pipeline.getFaceCount(); i++) {
-            float minx = Float.MAX_VALUE;
-            float miny = Float.MAX_VALUE;
-            float maxx = -minx;
-            float maxy = -miny;
-            int index = (int)pipeline.vertexAt(pipeline.faceVertexAt(i, 0), 5);
-            int w = 1;
-            int h = 1;
-
-            if(index >= 0 && index < TexturePipeline.MAX_TEXTURES) {
-                Texture texture = texturePipeline.textures[index];
-
-                if(texture != null) {
-                    w = texture.width;
-                    h = texture.height;
-                }
-            }
-
-            for(int j = 0; j != pipeline.getFaceVertexCount(i); j++) {
-                int k = pipeline.faceVertexAt(i, j);
-                float x = pipeline.vertexAt(k, 3);
-                float y = pipeline.vertexAt(k, 4);
-
-                minx = Math.min(x, minx);
-                miny = Math.min(y, miny);
-                maxx = Math.max(x, maxx);
-                maxy = Math.max(y, maxy);
-            }
-
-            int tilew = (int)(maxx * w - minx * w);
-            int tileh = (int)(maxy * h - miny * h);
+        if(insetTextureCoordinates) {
+            TexturePipeline texturePipeline = (TexturePipeline)pipeline;
             
-            if(tilew > 0 && tileh > 0) {
+            for(int i = 0; i != pipeline.getFaceCount(); i++) {
+                float minx = Float.MAX_VALUE;
+                float miny = Float.MAX_VALUE;
+                float maxx = -minx;
+                float maxy = -miny;
+                int index = (int)pipeline.vertexAt(pipeline.faceVertexAt(i, 0), 5);
+                int w = 1;
+                int h = 1;
+
+                if(index >= 0 && index < TexturePipeline.MAX_TEXTURES) {
+                    Texture texture = texturePipeline.textures[index];
+
+                    if(texture != null) {
+                        w = texture.width;
+                        h = texture.height;
+                    }
+                }
+
                 for(int j = 0; j != pipeline.getFaceVertexCount(i); j++) {
                     int k = pipeline.faceVertexAt(i, j);
                     float x = pipeline.vertexAt(k, 3);
                     float y = pipeline.vertexAt(k, 4);
 
-                    if(x > minx + 1.0f / w) {
-                        x -= 1.0f / w * 0.05f;
-                    } else {
-                        x += 1.0f / w * 0.05f;
+                    minx = Math.min(x, minx);
+                    miny = Math.min(y, miny);
+                    maxx = Math.max(x, maxx);
+                    maxy = Math.max(y, maxy);
+                }
+
+                int tilew = (int)(maxx * w - minx * w);
+                int tileh = (int)(maxy * h - miny * h);
+                
+                if(tilew > 0 && tileh > 0) {
+                    for(int j = 0; j != pipeline.getFaceVertexCount(i); j++) {
+                        int k = pipeline.faceVertexAt(i, j);
+                        float x = pipeline.vertexAt(k, 3);
+                        float y = pipeline.vertexAt(k, 4);
+
+                        if(x > minx + 1.0f / w) {
+                            x -= 1.0f / w * 0.05f;
+                        } else {
+                            x += 1.0f / w * 0.05f;
+                        }
+                        if(y > miny + 1.0f / h) {
+                            y -= 1.0f / h * 0.05f;
+                        } else {
+                            y += 1.0f / h * 0.05f;
+                        }
+                        pipeline.setVertexAt(k, 3, x);
+                        pipeline.setVertexAt(k, 4, y);
                     }
-                    if(y > miny + 1.0f / h) {
-                        y -= 1.0f / h * 0.05f;
-                    } else {
-                        y += 1.0f / h * 0.05f;
-                    }
-                    pipeline.setVertexAt(k, 3, x);
-                    pipeline.setVertexAt(k, 4, y);
                 }
             }
         }
