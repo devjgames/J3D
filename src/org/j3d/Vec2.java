@@ -230,7 +230,10 @@ public final class Vec2 {
         return this;
     }
 
-    public Vec2 parse(String[] tokens, int i) throws NumberFormatException {
+    public Vec2 parse(String text) throws NumberFormatException {
+        int i = 0;
+        String[] tokens = text.split("\\s+");
+        
         x = Float.parseFloat(tokens[i++]);
         y = Float.parseFloat(tokens[i++]);
         return this;

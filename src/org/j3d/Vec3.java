@@ -293,7 +293,10 @@ public final class Vec3 {
         return this;
     }
 
-    public Vec3 parse(String[] tokens, int i) throws NumberFormatException {
+    public Vec3 parse(String text) throws NumberFormatException {
+        int i = 0;
+        String[] tokens = text.split("\\s+");
+        
         x = Float.parseFloat(tokens[i++]);
         y = Float.parseFloat(tokens[i++]);
         z = Float.parseFloat(tokens[i++]);

@@ -2,10 +2,10 @@ package org.j3d;
 
 import java.util.Vector;
 
-public class Collider implements TriangleVisitor {
+public class Collider {
 
     public static interface ContactListener {
-        void contactMade(Collider collider, Collidable collidable, Triangle triangle);
+        void contactMade(Collider collider, Node node, Triangle triangle);
     }
 
     public final Vec3 velocity = new Vec3();
@@ -24,6 +24,7 @@ public class Collider implements TriangleVisitor {
     private Vec3 hNormal = new Vec3();
     private Vec3 rPosition = new Vec3();
     private Triangle hTriangle = new Triangle();
+    private Triangle triangle = new Triangle();
     private Vec3 cPoint = new Vec3();
     private Vec3 iPoint = new Vec3();
     private Vec3 origin = new Vec3();
@@ -33,7 +34,8 @@ public class Collider implements TriangleVisitor {
     private Vec3 f = new Vec3();
     private AABB bounds = new AABB();
     private float[] time = new float[] { 0 };
-    private Collidable hit = null;
+    private Node hit = null;
+    private Triangle hitTri = null;
     private Vector<ContactListener> listeners = new Vector<>();
     private int tested = 0;
 
@@ -61,19 +63,37 @@ public class Collider implements TriangleVisitor {
         return tested;
     }
 
-    public Collidable intersect(Vector<Collidable> collidables, Camera camera, Vec3 origin, Vec3 direction, float buffer, float[] time) {
-        Collidable iCollidable = null;
-        for(Collidable collidable : collidables) {
-            if(collidable.enabled) {
-                if(collidable.intersects(camera, origin, direction, buffer, time)) {
-                    iCollidable = collidable;
+    public Triangle intersect(Camera camera, Node root, Vec3 origin, Vec3 direction, float buffer, float[] time) throws Exception {
+        hitTri = null;
+        root.traverse((n) -> {
+            bounds.clear();
+            bounds.add(origin);
+            bounds.add(iPoint.set(direction).scale(time[0]).add(origin));
+
+            if(n.bounds.touches(bounds)) {
+                OctTree tree = n.getOctTree(camera);
+
+                if(tree != null) {
+                    tree.traverse(bounds, (t) -> {
+                        if(t.intersects(origin, direction, buffer, time)) {
+                            hitTri = hTriangle.set(t);
+                        }
+                    });
+                } else {
+                    for(int i = 0; i != n.triangleCount(); i++) {
+                        if(n.triangleAt(camera, i, triangle).intersects(origin, direction, buffer, time)) {
+                            hitTri = hTriangle.set(triangle);
+                        }
+                    }
                 }
+                return true;
             }
-        }
-        return iCollidable;
+            return false;
+        });
+        return hitTri;
     }
 
-    public boolean move(Vector<Collidable> collidables, Camera camera, Node node, Game game) {
+    public boolean move(Camera camera, Node root, Node node, Game game) throws Exception {
         boolean moving = false;
         velocity.x = velocity.z = 0;
         if(game.buttonDown(0)) {
@@ -107,12 +127,12 @@ public class Collider implements TriangleVisitor {
             }
             delta.transformNormal(groundMatrix, delta);
             node.position.add(delta);
-            resolve(collidables, node.position, camera, game);
+            resolve(root, node.position, camera, game);
         }
         return moving;
     }
 
-    public void resolve(Vector<Collidable> collidables, Vec3 position, Camera camera, Game game) {
+    public void resolve(Node root, Vec3 position, Camera camera, Game game) throws Exception {
         groundMatrix.toIdentity();
         onGround = false;
         hitRoof = false;
@@ -128,19 +148,32 @@ public class Collider implements TriangleVisitor {
             );
             hit = null;
             time[0] = radius;
-            for(Collidable collidable : collidables) {
-                if(collidable.enabled) {
-                    collidable.traverse(camera, bounds, this);
+            root.traverse((n) -> {
+                if(n.bounds.touches(bounds)) {
+                    OctTree tree = n.getOctTree(camera);
+    
+                    if(tree != null) {
+                        tree.traverse(bounds, (t) -> {
+                            resolve(t, n);                            
+                        });
+                    } else {
+                        for(int j = 0; j != n.triangleCount(); j++) {
+                            resolve(n.triangleAt(camera, j, triangle), n);
+                        }
+                    }
+                    return true;
                 }
-            }
+                return false;
+            });
             if(hit != null) {
                 u.set(0, 1, 0);
-                if(Math.acos(hNormal.dot(u)) * 180 / Math.PI < groundSlope) {
+                if(Math.acos(Math.max(-0.99, Math.min(0.99, hNormal.dot(u)))) * 180 / Math.PI < groundSlope) {
                     groundNormal.add(hNormal);
                     onGround = true;
+                    velocity.y = 0;
                 }
                 u.set(0, -1, 0);
-                if(Math.acos(hNormal.dot(u)) * 180 / Math.PI < roofSlope) {
+                if(Math.acos(Math.max(-0.99, Math.min(0.99, hNormal.dot(u))))  * 180 / Math.PI < roofSlope) {
                     hitRoof = true;
                     velocity.y = 0;
                 }
@@ -164,12 +197,10 @@ public class Collider implements TriangleVisitor {
                 r.z, u.z, f.z, 0,
                 0, 0, 0, 1
             );
-            velocity.y = 0;
         }
     }
 
-    @Override
-    public void visit(Triangle triangle, Collidable collidable) {
+    public void resolve(Triangle triangle, Node node) {
         float t = time[0];
         direction.neg(triangle.n);
         if(triangle.intersectsPlane(origin, direction, time)) {
@@ -178,9 +209,8 @@ public class Collider implements TriangleVisitor {
             if(triangle.contains(iPoint, 0)) {
                 hNormal.set(triangle.n);
                 iPoint.add(rPosition.set(hNormal).scale(radius), rPosition);
-                hit = collidable;
-                hTriangle.set(triangle.p1, triangle.p2, triangle.p3);
-                hTriangle.tag = triangle.tag;
+                hit = node;
+                hTriangle.set(triangle);
             } else {
                 time[0] = t;
                 cPoint = triangle.closestEdgePoint(origin, cPoint);
@@ -189,9 +219,8 @@ public class Collider implements TriangleVisitor {
                     time[0] = direction.length();
                     hNormal.normalize(direction);
                     cPoint.add(rPosition.set(hNormal).scale(radius), rPosition);
-                    hit = collidable;
-                    hTriangle.set(triangle.p1, triangle.p2, triangle.p3);
-                    hTriangle.tag = triangle.tag;
+                    hit = node;
+                    hTriangle.set(triangle);
                 }
             }
         }

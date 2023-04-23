@@ -1,5 +1,6 @@
 package org.j3d;
 
+import java.io.File;
 import java.util.Vector;
 
 public class ParticleSystem extends Renderable {
@@ -42,6 +43,11 @@ public class ParticleSystem extends Renderable {
     }
 
     @Override
+    public File file() {
+        return null;
+    }
+
+    @Override
     public AABB getBounds(Node node, Camera camera, AABB bounds) {
         return bounds.set(this.bounds);
     }
@@ -52,7 +58,7 @@ public class ParticleSystem extends Renderable {
     }
 
     @Override
-    public Triangle getTriangle(Node node, Camera camera, int i, Triangle triangle) {
+    public Triangle triangleAt(Node node, Camera camera, int i, Triangle triangle) {
         return null;
     }
 
@@ -142,6 +148,11 @@ public class ParticleSystem extends Renderable {
         particles = temp;
         temp = t;
         this.count = count;
+    }
+
+    @Override
+    public Renderable newInstance() {
+        return null;
     }
     
     public void emit(Particle particle, Game game) {

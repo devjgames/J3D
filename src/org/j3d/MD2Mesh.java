@@ -5,45 +5,6 @@ import java.util.Vector;
 
 public class MD2Mesh extends Renderable {
 
-    public static int readByte(byte[] bytes, int[] i) {
-        return bytes[i[0]++] & 0xFF;
-    }
-
-    public static int readShort(byte[] bytes, int[] i) {
-        int b1 = bytes[i[0]++];
-        int b2 = bytes[i[0]++];
-
-        return ((b2 << 8) & 0xFF00) | (b1 & 0xFF);
-    }
-
-    public static int readInt(byte[] bytes, int[] i) {
-        int b1 = bytes[i[0]++];
-        int b2 = bytes[i[0]++];
-        int b3 = bytes[i[0]++];
-        int b4 = bytes[i[0]++];
-
-        return ((b4 << 24) & 0xFF000000) | ((b3 << 16) & 0xFF0000) | ((b2 << 8) & 0xFF00) | (b1 & 0xFF);
-    }
-
-    public static float readFloat(byte[] bytes, int[] i) {
-        return Float.intBitsToFloat(readInt(bytes, i));
-    }
-
-    public static String readString(byte[] bytes, int[] i, int length) {
-        int j = i[0];
-        int s = j;
-
-        i[0] += length;
-        for(; j != length; j++) {
-            if(bytes[j] == 0) {
-                break;
-            }  
-        }
-        length = j - s;
-
-        return new String(bytes, s, length);
-    }
-    
     public static class MD2Header {
         public final int id;
         public final int version;
@@ -64,23 +25,23 @@ public class MD2Mesh extends Renderable {
         public final int offEnd;
 
         public MD2Header(byte[] bytes, int[] i) {
-            id = readInt(bytes, i);
-            version = readInt(bytes, i);
-            skinW = readInt(bytes, i);
-            skinH = readInt(bytes, i);
-            frameSize = readInt(bytes, i);
-            numSkins = readInt(bytes, i);
-            numXYZ = readInt(bytes, i);
-            numST = readInt(bytes, i);
-            numTris = readInt(bytes, i);
-            numGLCmds = readInt(bytes, i);
-            numFrames = readInt(bytes, i);
-            offSkins = readInt(bytes, i);
-            offST = readInt(bytes, i);
-            offTris = readInt(bytes, i);
-            offFrames = readInt(bytes, i);
-            offGLCmds = readInt(bytes, i);
-            offEnd = readInt(bytes, i);
+            id = IO.readInt(bytes, i);
+            version = IO.readInt(bytes, i);
+            skinW = IO.readInt(bytes, i);
+            skinH = IO.readInt(bytes, i);
+            frameSize = IO.readInt(bytes, i);
+            numSkins = IO.readInt(bytes, i);
+            numXYZ = IO.readInt(bytes, i);
+            numST = IO.readInt(bytes, i);
+            numTris = IO.readInt(bytes, i);
+            numGLCmds = IO.readInt(bytes, i);
+            numFrames = IO.readInt(bytes, i);
+            offSkins = IO.readInt(bytes, i);
+            offST = IO.readInt(bytes, i);
+            offTris = IO.readInt(bytes, i);
+            offFrames = IO.readInt(bytes, i);
+            offGLCmds = IO.readInt(bytes, i);
+            offEnd = IO.readInt(bytes, i);
         }
     }
 
@@ -89,8 +50,8 @@ public class MD2Mesh extends Renderable {
         public final short t;
 
         public MD2TextureCoordinate(byte[] bytes, int[] i) {
-            s = (short)readShort(bytes, i);
-            t = (short)readShort(bytes, i);
+            s = (short)IO.readShort(bytes, i);
+            t = (short)IO.readShort(bytes, i);
         }
     }
 
@@ -101,12 +62,12 @@ public class MD2Mesh extends Renderable {
         public MD2Triangle(byte[] bytes, int[] i) {
             xyz = new short[3];
             st = new short[3];
-            xyz[0] = (short)readShort(bytes, i);
-            xyz[1] = (short)readShort(bytes, i);
-            xyz[2] = (short)readShort(bytes, i);
-            st[0] = (short)readShort(bytes, i);
-            st[1] = (short)readShort(bytes, i);
-            st[2] = (short)readShort(bytes, i);
+            xyz[0] = (short)IO.readShort(bytes, i);
+            xyz[1] = (short)IO.readShort(bytes, i);
+            xyz[2] = (short)IO.readShort(bytes, i);
+            st[0] = (short)IO.readShort(bytes, i);
+            st[1] = (short)IO.readShort(bytes, i);
+            st[2] = (short)IO.readShort(bytes, i);
         }
     }
 
@@ -116,10 +77,10 @@ public class MD2Mesh extends Renderable {
 
         public MD2Vertex(byte[] bytes, int[] i) {
             xyz = new short[3];
-            xyz[0] = (short)readByte(bytes, i);
-            xyz[1] = (short)readByte(bytes, i);
-            xyz[2] = (short)readByte(bytes, i);
-            n = (short)readByte(bytes, i);
+            xyz[0] = (short)IO.readByte(bytes, i);
+            xyz[1] = (short)IO.readByte(bytes, i);
+            xyz[2] = (short)IO.readByte(bytes, i);
+            n = (short)IO.readByte(bytes, i);
         }
     }
 
@@ -133,13 +94,13 @@ public class MD2Mesh extends Renderable {
         public MD2Frame(byte[] bytes, int[] i, MD2Header header) {
             scale = new float[3];
             translation = new float[3];
-            scale[0] = readFloat(bytes, i);
-            scale[1] = readFloat(bytes, i);
-            scale[2] = readFloat(bytes, i);
-            translation[0] = readFloat(bytes, i);
-            translation[1] = readFloat(bytes, i);
-            translation[2] = readFloat(bytes, i);
-            name = readString(bytes, i, 16);
+            scale[0] = IO.readFloat(bytes, i);
+            scale[1] = IO.readFloat(bytes, i);
+            scale[2] = IO.readFloat(bytes, i);
+            translation[0] = IO.readFloat(bytes, i);
+            translation[1] = IO.readFloat(bytes, i);
+            translation[2] = IO.readFloat(bytes, i);
+            name = IO.readString(bytes, i, 16);
             vertices = new MD2Vertex[header.numXYZ];
             bounds = new AABB();
             for(int j = 0; j != header.numXYZ; j++) {
@@ -167,10 +128,13 @@ public class MD2Mesh extends Renderable {
     private boolean looping;
     private float amount;
     private float[][] normals;
+    private File file;
 
     public MD2Mesh(File file) throws IOException {
         byte[] bytes = IO.readAllBytes(file);
         int[] i = new int[] { 0 };
+
+        this.file = file;
 
         header = new MD2Header(bytes, i);
         i[0] = header.offST;
@@ -220,6 +184,13 @@ public class MD2Mesh extends Renderable {
         looping = false;
 
         reset();
+
+        this.file = mesh.file;
+    }
+
+    @Override
+    public File file() {
+        return file;
     }
 
     public boolean isDone() {
@@ -257,7 +228,7 @@ public class MD2Mesh extends Renderable {
     }
 
     @Override
-    public Triangle getTriangle(Node node, Camera camera, int i, Triangle triangle) {
+    public Triangle triangleAt(Node node, Camera camera, int i, Triangle triangle) {
         i *= 3;
         triangle.set(
             vertices[i + 0].position.x, vertices[i + 0].position.y, vertices[i + 0].position.z, 
@@ -352,5 +323,10 @@ public class MD2Mesh extends Renderable {
         }
         frames[f1].bounds.min.lerp(frames[f2].bounds.min, amount, bounds.min);
         frames[f1].bounds.max.lerp(frames[f2].bounds.max, amount, bounds.max);
+    }
+
+    @Override
+    public Renderable newInstance() {
+        return new MD2Mesh(this);
     }
 }

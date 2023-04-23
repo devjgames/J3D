@@ -55,6 +55,45 @@ public class IO {
         return bytes;
     }
 
+    public static int readByte(byte[] bytes, int[] i) {
+        return bytes[i[0]++] & 0xFF;
+    }
+
+    public static int readShort(byte[] bytes, int[] i) {
+        int b1 = bytes[i[0]++];
+        int b2 = bytes[i[0]++];
+
+        return ((b2 << 8) & 0xFF00) | (b1 & 0xFF);
+    }
+
+    public static int readInt(byte[] bytes, int[] i) {
+        int b1 = bytes[i[0]++];
+        int b2 = bytes[i[0]++];
+        int b3 = bytes[i[0]++];
+        int b4 = bytes[i[0]++];
+
+        return ((b4 << 24) & 0xFF000000) | ((b3 << 16) & 0xFF0000) | ((b2 << 8) & 0xFF00) | (b1 & 0xFF);
+    }
+
+    public static float readFloat(byte[] bytes, int[] i) {
+        return Float.intBitsToFloat(readInt(bytes, i));
+    }
+
+    public static String readString(byte[] bytes, int[] i, int length) {
+        int j = i[0];
+        int s = j;
+
+        i[0] += length;
+        for(; j != length; j++) {
+            if(bytes[j] == 0) {
+                break;
+            }  
+        }
+        length = j - s;
+
+        return new String(bytes, s, length);
+    }
+
     public static void writeAllBytes(byte[] bytes, File file) throws IOException {
         writeAllBytes(bytes, 0, bytes.length, file);
     }

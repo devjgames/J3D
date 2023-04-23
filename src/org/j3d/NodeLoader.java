@@ -35,11 +35,12 @@ public class NodeLoader implements AssetLoader {
                     keyedPolygons.put(material, new Vector<>());
                 }
             } else if (tLine.startsWith("v ")) {
-                vList.add(new Vec4(new Vec3().parse(tokens, 1), 1));
+                vList.add(new Vec4(new Vec3().parse(tLine.substring(1).trim()), 1));
             } else if (tLine.startsWith("vt ")) {
-                tList.add(new Vec2(Float.parseFloat(tokens[1]), 1 - Float.parseFloat(tokens[2])));
+                tList.add(new Vec2(new Vec2().parse(tLine.substring(2).trim())));
+                tList.lastElement().y = 1 - tList.lastElement().y;
             } else if (tLine.startsWith("vn ")) {
-                nList.add(new Vec3().parse(tokens, 1));
+                nList.add(new Vec3().parse(tLine.substring(2).trim()));
             } else if (tLine.startsWith("f ")) {
                 if(!keyedVertices.containsKey(material)) {
                     keyedVertices.put(material, new Vector<>());
@@ -75,6 +76,7 @@ public class NodeLoader implements AssetLoader {
         }
         sortedKeys.sort((a, b) -> a.compareTo(b));
         Node root = new Node();
+        root.name = IO.fileNameWithOutExtension(file);
         for(String key : sortedKeys) {
             Vector<Integer> vIndices = keyedIndices.get(key);
             Vector<Vector<Integer>> vPolygons = keyedPolygons.get(key);

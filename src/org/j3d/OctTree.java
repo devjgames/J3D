@@ -5,6 +5,10 @@ import java.util.Vector;
 
 public class OctTree implements Iterable<OctTree> {
 
+    public static interface Visitor {
+        void visit(Triangle triangle);
+    }
+
     public final AABB bounds = new AABB();
     
     private Vector<OctTree> children = new Vector<>();
@@ -69,18 +73,24 @@ public class OctTree implements Iterable<OctTree> {
         return triangles.size();
     }
 
-    public Triangle getTriangle(int i, Triangle triangle) {
-        Triangle tri = triangles.get(i);
-
-        triangle.set(tri.p1, tri.p2, tri.p3);
-        triangle.tag = tri.tag;
-
-        return triangle;
+    public Triangle triangleAt(int i, Triangle triangle) {
+        return triangle.set(triangles.get(i));
     }
 
     @Override
     public Iterator<OctTree> iterator() {
         return children.iterator();
+    }
+
+    public void traverse(AABB bounds, Visitor visitor) {
+        if(this.bounds.touches(bounds)) {
+            for(Triangle triangle : triangles) {
+                visitor.visit(triangle);
+            }
+            for(OctTree tree : this) {
+                tree.traverse(bounds, visitor);
+            }
+        }
     }
 
     public static OctTree create(Vector<Triangle> triangles, int minTrisPerTree) {

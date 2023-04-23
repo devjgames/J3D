@@ -1,10 +1,9 @@
 package org.j3d;
 
+import java.io.File;
 import java.util.Vector;
 
 public class Mesh extends Renderable {
-
-    public final Vec4 color = new Vec4(1, 1, 1, 1);
 
     private Vertex[] vertices = null;
     private int[] indices = null;
@@ -30,6 +29,11 @@ public class Mesh extends Renderable {
         calcBounds();
     }
 
+    @Override
+    public File file() {
+        return null;
+    }
+
     public int vertexCount() {
         return vertices.length;
     }
@@ -42,19 +46,19 @@ public class Mesh extends Renderable {
         return polygons.length;
     }
 
-    public Vertex getVertex(int i) {
+    public Vertex vertexAt(int i) {
         return vertices[i];
     }
 
-    public int getIndex(int i) {
+    public int indexAt(int i) {
         return indices[i];
     }
 
-    public int getPolygonIndexCount(int i) {
+    public int polygonIndexCount(int i) {
         return polygons[i].length;
     }
 
-    public int getPolygonIndex(int i, int j) {
+    public int polygonIndexAt(int i, int j) {
         return polygons[i][j];
     }
 
@@ -76,7 +80,7 @@ public class Mesh extends Renderable {
     }
 
     @Override
-    public Triangle getTriangle(Node node, Camera camera, int i, Triangle triangle) {
+    public Triangle triangleAt(Node node, Camera camera, int i, Triangle triangle) {
         Vec4 p1, p2, p3;
         i *= 3;
         p1 = vertices[indices[i++]].position;
@@ -104,5 +108,10 @@ public class Mesh extends Renderable {
 
     @Override
     public void update(Game game) {
+    }
+
+    @Override
+    public Renderable newInstance() {
+        return new Mesh(this);
     }
 }

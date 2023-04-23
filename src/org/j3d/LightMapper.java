@@ -9,16 +9,21 @@ import java.awt.image.*;
 
 public class LightMapper {
 
+    private Vector<Node> renderables = new Vector<>();
+    private Vector<Triangle> triangles = new Vector<>();
+    private Vector<Node> lights = new Vector<>();
+    private Triangle triangle = new Triangle();
+
     public void light(File file, int width, int height, Game game, Scene scene, boolean deleteLightMap) throws Exception {
-        Vector<Node> renderables = new Vector<>();
-        Vector<Node> lights = new Vector<>();
         int[] xy = new int[] { 0, 0 };
         int[] maxH = new int[] { 0 };
         Vec2 pixelSize = new Vec2(1, 1).div(width, height);
         int[] pixels = null;
         BufferedImage image = null;
-        Triangle triangle = new Triangle();
-        Vector<Triangle> triangles = new Vector<>();
+
+        renderables.clear();
+        triangles.clear();
+        lights.clear();
 
         scene.camera.calcTransforms(game.aspectRatio());
         scene.root.calcBoundsAndTransform(scene.camera);
@@ -35,21 +40,38 @@ public class LightMapper {
             }
         }
 
-        addRenderablesLightsAndTriangles(scene.root, scene.camera, renderables, lights, triangles);
+        scene.root.traverse((n) -> {
+            if(n.visible) {
+                if(n.getMesh() != null && n.lightMapEnabled) {
+                    renderables.add(n);
+                    if(n.castsShadow) {
+                        for(int i = 0; i != n.triangleCount(); i++) {
+                            triangles.add(n.triangleAt(scene.camera, i, new Triangle()));
+                        }
+                    }
+                }
+                if(n.isLight) {
+                    lights.add(n);
+                }
+                return true;
+            }
+            return false;
+        });
 
         OctTree tree = null;
 
         if(!file.exists()) {
             tree = OctTree.create(triangles, 16);
         }
+        triangles.clear();
 
         for(Node renderable : renderables) {
             Mesh mesh = renderable.getMesh();
 
             for(int i = 0; i != mesh.polygonCount(); i++) {
-                Vertex v1 = mesh.getVertex(mesh.getPolygonIndex(i, 0));
-                Vertex v2 = mesh.getVertex(mesh.getPolygonIndex(i, 1));
-                Vertex v3 = mesh.getVertex(mesh.getPolygonIndex(i, 2));
+                Vertex v1 = mesh.vertexAt(mesh.polygonIndexAt(i, 0));
+                Vertex v2 = mesh.vertexAt(mesh.polygonIndexAt(i, 1));
+                Vertex v3 = mesh.vertexAt(mesh.polygonIndexAt(i, 2));
                 Vec3 e1 = new Vec3();
                 Vec3 e2 = new Vec3();
                 Vec3 p1 = new Vec3(v1.position);
@@ -74,8 +96,8 @@ public class LightMapper {
                 float x2 = -Float.MAX_VALUE;
                 float y2 = -Float.MAX_VALUE;
 
-                for(int j = 0; j != mesh.getPolygonIndexCount(i); j++) {
-                    Vertex v = mesh.getVertex(mesh.getPolygonIndex(i, j));
+                for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
+                    Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
                     Vec3 p = new Vec3(v.position).add(renderable.position);
                     float x = p.dot(e1);
                     float y = p.dot(e2);
@@ -95,8 +117,8 @@ public class LightMapper {
                 if(!allocate(xy, w, h, maxH, width, height)) {
                     throw new Exception("failed to allocate light map tile");
                 }
-                for(int j = 0; j != mesh.getPolygonIndexCount(i); j++) {
-                    Vertex v = mesh.getVertex(mesh.getPolygonIndex(i, j));
+                for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
+                    Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
                     Vec3 p = new Vec3(v.position).add(renderable.position);
                     float x = (int)p.dot(e1);
                     float y = (int)p.dot(e2);
@@ -108,9 +130,9 @@ public class LightMapper {
                     v.textureCoordinate2.set(x, y);
                 }
 
-                Vec2 t1 = mesh.getVertex(mesh.getPolygonIndex(i, 0)).textureCoordinate2;
-                Vec2 t2 = mesh.getVertex(mesh.getPolygonIndex(i, 2)).textureCoordinate2;
-                Vec2 t3 = mesh.getVertex(mesh.getPolygonIndex(i, 1)).textureCoordinate2;
+                Vec2 t1 = mesh.vertexAt(mesh.polygonIndexAt(i, 0)).textureCoordinate2;
+                Vec2 t2 = mesh.vertexAt(mesh.polygonIndexAt(i, 2)).textureCoordinate2;
+                Vec2 t3 = mesh.vertexAt(mesh.polygonIndexAt(i, 1)).textureCoordinate2;
 
                 float area = (t3.x - t1.x) * (t2.y - t1.y) - (t3.y - t1.y) * (t2.x - t1.x);
 
@@ -206,25 +228,9 @@ public class LightMapper {
         for(Node renderable : renderables) {
             renderable.texture2 = game.assets().load(file);
         }
-    }
 
-    private void addRenderablesLightsAndTriangles(Node node, Camera camera, Vector<Node> renderables, Vector<Node> lights, Vector<Triangle> triangles) {
-        if(node.visible) {
-            if(node.getMesh() != null && node.lightMapEnabled) {
-                renderables.add(node);
-                if(node.castsShadow) {
-                    for(int i = 0; i != node.triangleCount(); i++) {
-                        triangles.add(node.getTriangle(camera, i, new Triangle()));
-                    }
-                }
-            }
-            if(node.isLight) {
-                lights.add(node);
-            }
-            for(Node child : node) {
-                addRenderablesLightsAndTriangles(child, camera, renderables, lights, triangles);
-            }
-        }
+        renderables.clear();
+        lights.clear();
     }
 
     private boolean inShadow(OctTree tree, AABB bounds, Vec3 point, Vec3 origin, Vec3 direction, float[] time, Triangle triangle) {
@@ -233,7 +239,7 @@ public class LightMapper {
         bounds.add(point.set(direction).scale(time[0]).add(origin));
         if(tree.bounds.touches(bounds)) {
             for(int i = 0; i != tree.triangleCount(); i++) {
-                if(tree.getTriangle(i, triangle).intersects(origin, direction, 0, time)) {
+                if(tree.triangleAt(i, triangle).intersects(origin, direction, 0, time)) {
                     return true;
                 }
             }

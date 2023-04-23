@@ -5,6 +5,10 @@ import java.util.Vector;
 
 public final class Node implements Iterable<Node> {
 
+    public static interface Visitor {
+        boolean visit(Node node) throws Exception;
+    }
+
     private static final Vec3 f = new Vec3();
     private static final Vec3 u = new Vec3();
     private static final Vec3 r = new Vec3();
@@ -25,6 +29,8 @@ public final class Node implements Iterable<Node> {
     public boolean depthWriteEnabled = true;
     public boolean depthTestEnabled = true;
     public boolean maskEnabled = false;
+    public boolean collidable = false;
+    public boolean dynamic = false;
     public Texture texture = null;
     public Texture texture2 = null;
     public int zOrder = 0;
@@ -42,43 +48,34 @@ public final class Node implements Iterable<Node> {
     public boolean receivesShadow = true;
     public FollowCamera follow = FollowCamera.NONE;
     public Object tag = null;
+    public int triangleTag = 1;
+    public int minTrisPerTree = 16;
 
     private final Vector<Node> children = new Vector<>();
     private Node parent = null;
+    private OctTree octTree = null;
+
+    final Vector<NodeComponent> components = new Vector<>();
 
     public Node() {
     }
 
-    public Node(Node node) {
-        name = node.name;
-        visible = node.visible;
-        renderable = node.renderable;
-        position.set(node.position);
-        rotation.set(node.rotation);
-        scale.set(node.scale);
-        cullState = node.cullState;
-        blendEnabled = node.blendEnabled;
-        additiveBlend = node.additiveBlend;
-        depthWriteEnabled = node.depthWriteEnabled;
-        depthTestEnabled = node.depthTestEnabled;
-        maskEnabled = node.maskEnabled;
-        texture = node.texture;
-        texture2 = node.texture2;
-        zOrder = node.zOrder;
-        isLight = node.isLight;
-        ambientColor.set(node.ambientColor);
-        diffuseColor.set(node.diffuseColor);
-        lightColor.set(node.lightColor);
-        lightRadius = node.lightRadius;
-        lightSampleCount = node.lightSampleCount;
-        lightSampleRadius = node.lightSampleRadius;
-        lightMapEnabled = node.lightMapEnabled;
-        castsShadow = node.castsShadow;
-        receivesShadow = node.receivesShadow;
-        lightingEnabled = node.lightingEnabled;
-        follow = node.follow;
+    public Node(Game game, Scene scene, Node node) throws Exception {
+        if(node.renderable != null) {
+            renderable = node.renderable.newInstance();
+        }
+        if(node.texture != null) {
+            texture = game.assets().load(node.texture.file);
+        }
+        if(node.texture2 != null) {
+            texture2 = game.assets().load(node.texture2.file);
+        }
+        Utils.copy(node, this);
         for(Node child : node) {
-            add(new Node(child));
+            add(new Node(game, scene, child));
+        }
+        for(NodeComponent component : node.components) {
+            component.newInstance(game, scene, this);
         }
     }
 
@@ -96,9 +93,9 @@ public final class Node implements Iterable<Node> {
         return null;
     }
 
-    public Sprite3D getSprite3D() {
-        if(renderable instanceof Sprite3D) {
-            return (Sprite3D)renderable;
+    public ParticleSystem getParticleSystem() {
+        if(renderable instanceof ParticleSystem) {
+            return (ParticleSystem)renderable;
         }
         return null;
     }
@@ -218,7 +215,80 @@ public final class Node implements Iterable<Node> {
         return 0;
     }
 
-    public Triangle getTriangle(Camera camera, int i, Triangle triangle) {
-        return renderable.getTriangle(this, camera, i, triangle).transform(model);
+    public Triangle triangleAt(Camera camera, int i, Triangle triangle) {
+        return renderable.triangleAt(this, camera, i, triangle).setTag(triangleTag).setData(this).transform(model);
+    }
+
+    public OctTree getOctTree(Camera camera) {
+        if(renderable != null && octTree == null && collidable && !dynamic) {
+            if(renderable.triangleCount() != 0) {
+                Vector<Triangle> triangles = new Vector<>();
+
+                for(int i = 0; i != triangleCount(); i++) {
+                    triangles.add(triangleAt(camera, i, new Triangle()));
+                }
+                octTree = OctTree.create(triangles, minTrisPerTree);
+            }
+        }
+        return octTree;
+    }
+
+    public void clearOctTree() {
+        octTree = null;
+    }
+
+    public void traverse(Visitor visitor) throws Exception {
+        if(visitor.visit(this)) {
+            for(Node node : this) {
+                node.traverse(visitor);
+            }
+        }
+    }
+
+    public Node find(Visitor visitor, boolean recursive) throws Exception {
+        if(visitor.visit(this)) {
+            return this;
+        }
+        if(recursive) {
+            for(Node node : this) {
+                Node r = node.find(visitor, true);
+
+                if(r != null) {
+                    return r;
+                }
+            }
+        }
+        return null;
+    }
+
+    public int componentCount() {
+        return components.size();
+    }
+
+    public NodeComponent componentAt(int i) {
+        return components.get(i);
+    }
+
+    public NodeComponent find(Class<? extends NodeComponent> cls, boolean recursive) {
+        for(NodeComponent component : components) {
+            if(cls.isAssignableFrom(component.getClass())) {
+                return component;
+            }
+        }
+        if(recursive) {
+            for(Node node : this) {
+                NodeComponent r = node.find(cls, true);
+
+                if(r != null) {
+                    return r;
+                }
+            }
+        }
+        return null;
+    }
+
+    public void addComponent(Game game, Scene scene, NodeComponent component) {
+        component.init(game, scene, this);
+        components.add(component);
     }
 }

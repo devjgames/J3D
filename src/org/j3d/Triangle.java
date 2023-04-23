@@ -16,6 +16,7 @@ public final class Triangle {
     public final Vec3 n = new Vec3();
     public float d;
     public int tag = 0;
+    public Object data = null;
 
     public Triangle() {
         p1.set(0, 0, 0);
@@ -26,6 +27,13 @@ public final class Triangle {
 
     public Triangle(Vec3 p1, Vec3 p2, Vec3 p3) {
         set(p1, p2, p3);
+    }
+
+    public Node getNode() {
+        if(data instanceof Node) {
+            return (Node)data;
+        }
+        return null;
     }
 
     public Triangle(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
@@ -45,6 +53,27 @@ public final class Triangle {
         p2.set(x2, y2, z2);
         p3.set(x3, y3, z3);
         calcPlane();
+        return this;
+    }
+
+    public Triangle set(Triangle triangle) {
+        p1.set(triangle.p1);
+        p2.set(triangle.p2);
+        p3.set(triangle.p3);
+        n.set(triangle.n);
+        d = triangle.d;
+        tag = triangle.tag;
+        data = triangle.data;
+        return this;
+    }
+
+    public Triangle setTag(int tag) {
+        this.tag = tag;
+        return this;
+    }
+
+    public Triangle setData(Object data) {
+        this.data = data;
         return this;
     }
 
