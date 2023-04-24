@@ -117,6 +117,8 @@ public class Utils {
             return null;
         }
 
+        paths.sort((a, b) -> ((String)a).compareTo((String)b));
+
         Object r = JOptionPane.showInputDialog(parent, "Select", "Select", JOptionPane.INFORMATION_MESSAGE, null, paths.toArray(), paths.get(0));
 
         if(r != null) {

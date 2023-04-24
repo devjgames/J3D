@@ -110,6 +110,22 @@ public class IO {
         }
     }
 
+    public static void appendAllBytes(byte[] bytes, File file) throws Exception {
+        if(file.exists()) {
+            byte[] ob = readAllBytes(file);
+            byte[] nb = new byte[ob.length + bytes.length];
+
+            for(int i = 0; i != ob.length; i++) {
+                nb[i] = ob[i];
+            }
+            for(int i = ob.length; i != nb.length; i++) {
+                nb[i] = bytes[i - ob.length];
+            }
+            bytes = nb;
+        } 
+        writeAllBytes(bytes, file);
+    }
+
     public static File file(String path) {
         return new File(path.replace('\\', File.separatorChar).replace('/', File.separatorChar));
     }

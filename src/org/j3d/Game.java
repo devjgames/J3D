@@ -17,8 +17,6 @@ public final class Game {
         void init(Game game) throws Exception;
 
         void render(Game game) throws Exception;
-
-        void update(Game game) throws Exception;
     }
 
     private class Listener implements MouseListener, MouseMotionListener, KeyListener, ComponentListener {
@@ -194,14 +192,9 @@ public final class Game {
                 }
 
             }
-    
-            try {
-                loop.update(me);
-                dX = 0;
-                dY = 0;
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            dX = 0;
+            dY = 0;
+
             tick();
         }
     }

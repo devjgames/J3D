@@ -1,5 +1,6 @@
 package org.j3d;
 
+import java.io.File;
 import java.util.Vector;
 
 public final class Scene  {
@@ -7,16 +8,21 @@ public final class Scene  {
     private static final Vector<Node> renderables = new Vector<>(100000);
     private static final Vector<Node> lights = new Vector<>(1000);
 
+    public final File file;
     public final Camera camera = new Camera();
     public final Node root = new Node();
     public final Vec3 backgroundColor = new Vec3(0.15f, 0.15f, 0.15f);
     public int maxLights = 6;
     public boolean drawLights = true;
+    public int snap = 1;
+    public int lightMapWidth = 128;
+    public int lightMapHeight = 128;
 
     private int trianglesRendered = 0;
     private Node ui = null;
 
-    public Scene(boolean inDesign, Game game) throws Exception {
+    public Scene(File file, boolean inDesign, Game game) throws Exception {
+        this.file = file;
         if(inDesign) {
             ui = game.assets().load(IO.file("assets/ui/cube.obj"));
             ui = ui.childAt(0);
@@ -55,10 +61,6 @@ public final class Scene  {
         trianglesRendered = 0;
 
         root.traverse((n) -> {
-            if(n.renderable != null) {
-                n.renderable.update(game);
-                n.renderable.buffer(n, camera);
-            }
             for(int i = 0; i != n.componentCount(); i++) {
                 if(!n.componentAt(i).setup()) {
                     n.componentAt(i).init();
@@ -71,10 +73,6 @@ public final class Scene  {
         root.calcBoundsAndTransform(camera);
 
         root.traverse((n) -> {
-            if(n.renderable != null) {
-                n.renderable.update(game);
-                n.renderable.buffer(n, camera);
-            }
             for(int i = 0; i != n.componentCount(); i++) {
                 if(!n.componentAt(i).setup()) {
                     n.componentAt(i).start();
@@ -87,10 +85,6 @@ public final class Scene  {
         root.calcBoundsAndTransform(camera);
 
         root.traverse((n) -> {
-            if(n.renderable != null) {
-                n.renderable.update(game);
-                n.renderable.buffer(n, camera);
-            }
             for(int i = 0; i != n.componentCount(); i++) {
                 n.componentAt(i).complete();
             }

@@ -24,7 +24,7 @@ public class Mesh extends Renderable {
         polygons = mesh.polygons;
 
         for(int i = 0; i != vertices.length; i++) {
-            vertices[i].set(mesh.vertices[i]);
+            vertices[i] = new Vertex(mesh.vertices[i]);
         }
         calcBounds();
     }

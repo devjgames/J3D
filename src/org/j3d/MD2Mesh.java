@@ -205,6 +205,22 @@ public class MD2Mesh extends Renderable {
         buffer(null, null);
     }
 
+    public int getStart() {
+        return start;
+    }
+
+    public int getEnd() {
+        return end;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public boolean isLooping() {
+        return looping;
+    }
+
     public void setSequence(int start, int end, int speed, boolean looping) {
         if(start != this.start || end != this.end || speed != this.speed || looping != this.looping) {
             if(start >= 0 && start < header.numFrames && end >= 0 && end < header.numFrames && speed >= 0 && start <= end) {
@@ -281,7 +297,7 @@ public class MD2Mesh extends Renderable {
     }
 
     @Override
-    public void light(Vector<Node> lights, int lightCount, Node node, Camera camera, Vec4 ambientColor, Vec4 diffuseColor) {    
+    public void light(Vector<Node> lights, int lightCount, Node node, Camera camera, Vec4 ambientColor, Vec4 diffuseColor) {  
         for(Vertex v : vertices) {
             v.light(lights, lightCount, node.model, node.modelIT, ambientColor, diffuseColor);
         }    

@@ -17,7 +17,7 @@ public class Serializer {
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document document =  builder.parse(file);
 
-        return (Scene)load(game, new Scene(inDesign, game), document.getDocumentElement());
+        return (Scene)load(game, new Scene(file, inDesign, game), document.getDocumentElement());
     }
 
     private static Object load(Game game, Scene scene, Element element) throws Exception {
@@ -51,22 +51,35 @@ public class Serializer {
                     Renderable renderable = game.assets().load(IO.file(element.getAttribute("renderable")));
 
                     node.renderable = renderable.newInstance();
+
+                    MD2Mesh mesh = node.getAnimatedMesh();
+
+                    if(mesh != null && element.hasAttribute("sequence")) {
+                        String[] tokens = element.getAttribute("sequence").split("\\s+");
+
+                        mesh.setSequence(
+                            Integer.parseInt(tokens[0]),
+                            Integer.parseInt(tokens[1]),
+                            Integer.parseInt(tokens[2]),
+                            Boolean.parseBoolean(tokens[3])
+                        );
+                    }
                 } catch(Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 }
             }
             if(element.hasAttribute("texture")) {
                 try {
                     node.texture = game.assets().load(IO.file(element.getAttribute("texture")));
                 } catch(Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 }
             }
             if(element.hasAttribute("texture2")) {
                 try {
                     node.texture2 = game.assets().load(IO.file(element.getAttribute("texture2")));
                 } catch(Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 }
             }
             if(element.hasAttribute("vertices") && element.hasAttribute("indices") && element.hasAttribute("polygons")) {
@@ -125,7 +138,7 @@ public class Serializer {
                             load(component, element2);
                             node.addComponent(game, scene, component);
                         } catch(Exception ex) {
-                            ex.printStackTrace();
+                            ex.printStackTrace(System.out);
                         }
                     }
                 }
@@ -145,7 +158,7 @@ public class Serializer {
                 try {
                     Utils.parse(o, element.getAttribute(name), name);
                 } catch(Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 }
             }
         }
@@ -244,7 +257,15 @@ public class Serializer {
             File file = node.renderable.file();
 
             if(file != null) {
+                MD2Mesh md2Mesh = node.getAnimatedMesh();
+
                 b.append(" renderable=\"" + file.getPath() + "\"");
+                if(md2Mesh != null) {
+                    b.append(
+                        " sequence=\"" + 
+                        md2Mesh.getStart() + " " + md2Mesh.getEnd() + " " + md2Mesh.getSpeed() + " " + md2Mesh.isLooping() + "\""
+                        );
+                }
             }
         }
         if(node.texture != null) {
