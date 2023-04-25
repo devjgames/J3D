@@ -1,5 +1,7 @@
 package org.j3d;
 
+import java.io.File;
+
 public abstract class NodeComponent {
     
     private Game game = null;
@@ -43,6 +45,10 @@ public abstract class NodeComponent {
     }
 
     public void renderSprites() throws Exception {
+    }
+
+    public File loadFile() {
+        return null;
     }
 
     public final void remove() {

@@ -48,7 +48,7 @@ public class AssetManager {
                 try {
                     ((Resource) value).destroy();
                 } catch(Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 }
             }
         }

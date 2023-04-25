@@ -20,6 +20,7 @@ public final class Scene  {
 
     private int trianglesRendered = 0;
     private Node ui = null;
+    private File loadFile = null;
 
     public Scene(File file, boolean inDesign, Game game) throws Exception {
         this.file = file;
@@ -50,6 +51,10 @@ public final class Scene  {
 
     public int getTrianglesRendered() {
         return trianglesRendered;
+    }
+
+    public File getLoadFile() {
+        return loadFile;
     }
 
     public void render(Game game) throws Exception {
@@ -144,16 +149,6 @@ public final class Scene  {
             return Float.compare(d1, d2);
         });
 
-        root.traverse((n) -> {
-            if(n.visible) {
-                for(int i = 0; i != n.componentCount(); i++) {
-                    n.componentAt(i).renderSprites();
-                }
-                return true;
-            }
-            return false;
-        });
-
         if(ui != null) {
             if(drawLights) {
                 for(Node light : lights) {
@@ -176,9 +171,42 @@ public final class Scene  {
             game.renderer().cullState = renderable.cullState;
             if(renderable.lightingEnabled) {
                 renderable.renderable.light(lights, Math.min(maxLights, lights.size()), renderable, camera, renderable.ambientColor, renderable.diffuseColor);
+            } else if(renderable.renderable instanceof Mesh) {
+                Mesh mesh = renderable.getMesh();
+
+                for(int i = 0; i != mesh.vertexCount(); i++) {
+                    mesh.vertexAt(i).color.set(renderable.color);
+                }
             }
             trianglesRendered += renderable.renderable.render(renderable, camera, game.renderer());
         }
+        root.traverse((n) -> {
+            if(n.visible) {
+                for(int i = 0; i != n.componentCount(); i++) {
+                    n.componentAt(i).renderSprites();
+                }
+                return true;
+            }
+            return false;
+        });
+
+        if(!inDesign()) {
+            root.traverse((n) -> {
+                if(n.visible && loadFile == null) {
+                    for(int i = 0; i != n.componentCount(); i++) {
+                        File f = n.componentAt(i).loadFile();
+
+                        if(f != null) {
+                            loadFile = f;
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            });
+        }
+        
         renderables.clear();
         lights.clear();
     }

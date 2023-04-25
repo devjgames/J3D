@@ -30,6 +30,7 @@ public class LightMapper {
 
         if(deleteLightMap) {
             if(file.exists()) {
+                System.out.println("deleting - " + file);
                 file.delete();
             }
         }

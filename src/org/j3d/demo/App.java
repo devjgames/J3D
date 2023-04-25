@@ -8,7 +8,10 @@ public class App {
     public static void main(String[] args) throws Exception {
         Utils.setNimbusLookAndFeel();
 
-        new GameEditor(250, 175, 3, true);
+        new GameEditor(
+            200, 150, 4, true,
+            Info.class.getName()
+        );
 
     }
 }

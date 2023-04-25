@@ -2,6 +2,7 @@ package org.j3d;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -114,7 +115,7 @@ public final class Game {
                 try {
                     loop.resize(me);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 }
             }
         }
@@ -144,7 +145,7 @@ public final class Game {
                     loop.init(me);
                     resetTimer();
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 } finally {
                     initialized = true;
                 }
@@ -155,7 +156,7 @@ public final class Game {
             try {
                 loop.render(me);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                ex.printStackTrace(System.out);
             }
     
             image.setRGB(0, 0, w(), h(), colorBuffer, 0, w());
@@ -184,7 +185,7 @@ public final class Game {
                     file.getParentFile().mkdirs();
                     ImageIO.write(snapShot, "PNG", file);
                 } catch(Exception ex) {
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                 } finally {
                     if(g2D != null) {
                         g2D.dispose();;

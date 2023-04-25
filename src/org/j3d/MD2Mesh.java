@@ -186,6 +186,8 @@ public class MD2Mesh extends Renderable {
         reset();
 
         this.file = mesh.file;
+
+        setSequence(mesh.start, mesh.end, mesh.speed, mesh.looping);
     }
 
     @Override

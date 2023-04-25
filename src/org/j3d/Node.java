@@ -35,6 +35,7 @@ public final class Node implements Iterable<Node> {
     public Texture texture2 = null;
     public int zOrder = 0;
     public boolean isLight = false;
+    public final Vec4 color = new Vec4(1, 1, 1, 1);
     public final Vec4 ambientColor = new Vec4(0.2f, 0.2f, 0.2f, 1);
     public final Vec4 diffuseColor = new Vec4(0.8f, 0.8f, 0.8f, 1);
     public final Vec4 lightColor = new Vec4(1, 1, 1, 1);
@@ -290,5 +291,10 @@ public final class Node implements Iterable<Node> {
     public void addComponent(Game game, Scene scene, NodeComponent component) {
         component.init(game, scene, this);
         components.add(component);
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
