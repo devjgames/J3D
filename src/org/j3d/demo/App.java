@@ -10,7 +10,11 @@ public class App {
 
         new GameEditor(
             200, 150, 4, true,
-            Info.class.getName()
+            Info.class.getName(),
+            Warp.class.getName(),
+            Sky.class.getName(),
+            FireLight.class.getName(),
+            Player.class.getName()
         );
 
     }

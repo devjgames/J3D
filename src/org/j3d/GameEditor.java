@@ -11,6 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -160,6 +161,16 @@ public class GameEditor implements org.j3d.Game.GameLoop {
         toggleButtons.get("Rot").setSelected(true);
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        buttons.put("AddScene", new JButton(
+            new AbstractAction("+") {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    createScene();
+                };
+            }
+        ));
+        bottomPanel.add(buttons.get("AddScene"));
 
         buttons.put("Load", new JButton(
             new AbstractAction("Load") {
@@ -342,7 +353,7 @@ public class GameEditor implements org.j3d.Game.GameLoop {
         bottomPanel.add(buttons.get("ClearMap"));
 
         buttons.put("SnapShot", new JButton(
-            new AbstractAction("Snap Shot") {
+            new AbstractAction("Snap") {
                 @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     game.takeSnapShot();
@@ -458,6 +469,22 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                     select(node);
                     enableUI();
                 }
+            }
+        }));
+        menu.add(new JMenuItem(new AbstractAction("Add Node") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Node parent = selected;
+                Node node = new Node();
+
+                if(parent == null) {
+                    parent = scene.root;
+                }
+                parent.add(node);
+
+                populateTree();
+                select(node);
+                enableUI();
             }
         }));
         menu.addSeparator();
@@ -670,7 +697,6 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                                         }
                                     }
                                 }
-                                return true;
                             }
                             if(n.isLight) {
                                 bounds.min.set(n.absolutePosition).sub(8, 8, 8);
@@ -679,7 +705,7 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                                     selected = n;
                                 }
                             }
-                            return false;
+                            return true;
                         });
                     } catch(Exception ex) {
                         ex.printStackTrace(System.out);
@@ -742,8 +768,10 @@ public class GameEditor implements org.j3d.Game.GameLoop {
 
             if(!key.equals("Play")) {
                 if(!key.equals("Clear")) {
-                    if(key.equals("Load")) {
+                    if(key.equals("Load") || key.equals("AddScene")) {
                         buttons.get(key).setEnabled(enabled || scene == null);
+                    } else if(key.equals("SnapShot")) {
+                        buttons.get(key).setEnabled(scene != null);
                     } else if(
                         key.equals("ToTarg") ||
                         key.equals("TargTo") ||
@@ -1038,7 +1066,14 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                     }
                     combo.putClientProperty(PFX + ".NAME", name);
                     combo.putClientProperty(PFX + ".OBJECT", o);
-                    combo.setSelectedItem(item);
+                    for(int i = 0; i != values.length; i++) {
+                        String v = values[i].toString();
+
+                        if(v.equals(item)) {
+                            combo.setSelectedIndex(i);
+                            break;
+                        }
+                    }
 
                     flowPanel.add(combo);
                     flowPanel.add(new JLabel(name, JLabel.LEFT));
@@ -1058,6 +1093,41 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                 } catch(Exception ex) {
                     ex.printStackTrace(System.out);
                 }
+            }
+        }
+    }
+
+    private void createScene() {
+        Object r = JOptionPane.showInputDialog(frame, "Scene Name", "");
+
+        if(r != null) {
+            String name = ((String)r).trim();
+
+            if(name.length() == 0) {
+                System.out.println("name is blank");
+                return;
+            }
+            
+            for(int i = 0; i != name.length(); i++) {
+                char c = name.charAt(i);
+
+                if(!(Character.isLetter(c) || Character.isDigit(c) || c == '_')) {
+                    System.out.println("name can only contain letter, digit or '_' characters");
+                    return;
+                }
+            }
+
+            File file = new File(new File("scenes"), name + ".xml");
+
+            if(file.exists()) {
+                System.out.println("scene already exists");
+                return;
+            }
+
+            try {
+                IO.writeAllBytes("<scene/>".getBytes(), file);
+            } catch(Exception ex) {
+                ex.printStackTrace(System.out);
             }
         }
     }

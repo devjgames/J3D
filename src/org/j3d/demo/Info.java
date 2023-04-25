@@ -21,7 +21,7 @@ public class Info extends NodeComponent {
                 font, 
                 "F=" + game().frameRate() + "\nT=" + scene().getTrianglesRendered(), 
                 
-                10, 12, 16, 1, 2, 2, 1, 1, 1, 1
+                10, 12, 16, 1, 5, 5, 1, 1, 1, 1
                 );
         }
     }

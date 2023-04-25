@@ -15,6 +15,7 @@ public class Collider {
     public int loopCount = 3;
     public float groundSlope = 45;
     public float roofSlope = 45;
+    public int intersectionBits = 0xF;
 
     private boolean onGround = false;
     private boolean hitRoof = false;
@@ -71,18 +72,26 @@ public class Collider {
             bounds.add(iPoint.set(direction).scale(time[0]).add(origin));
 
             if(n.bounds.touches(bounds)) {
-                OctTree tree = n.getOctTree(camera);
+                if(n.collidable) {
+                    OctTree tree = n.getOctTree(camera);
 
-                if(tree != null) {
-                    tree.traverse(bounds, (t) -> {
-                        if(t.intersects(origin, direction, buffer, time)) {
-                            hitTri = hTriangle.set(t);
-                        }
-                    });
-                } else {
-                    for(int i = 0; i != n.triangleCount(); i++) {
-                        if(n.triangleAt(camera, i, triangle).intersects(origin, direction, buffer, time)) {
-                            hitTri = hTriangle.set(triangle);
+                    if(tree != null) {
+                        tree.traverse(bounds, (t) -> {
+                            if((t.tag & intersectionBits) != 0) {
+                                if(t.intersects(origin, direction, buffer, time)) {
+                                    hitTri = hTriangle.set(t);
+                                }
+                            }
+                        });
+                    } else {
+                        for(int i = 0; i != n.triangleCount(); i++) {
+                            n.triangleAt(camera, i, triangle);
+
+                            if((triangle.tag & intersectionBits) != 0) {
+                                if(triangle.intersects(origin, direction, buffer, time)) {
+                                    hitTri = hTriangle.set(triangle);
+                                }
+                            }
                         }
                     }
                 }
@@ -150,15 +159,17 @@ public class Collider {
             time[0] = radius;
             root.traverse((n) -> {
                 if(n.bounds.touches(bounds)) {
-                    OctTree tree = n.getOctTree(camera);
-    
-                    if(tree != null) {
-                        tree.traverse(bounds, (t) -> {
-                            resolve(t, n);                            
-                        });
-                    } else {
-                        for(int j = 0; j != n.triangleCount(); j++) {
-                            resolve(n.triangleAt(camera, j, triangle), n);
+                    if(n.collidable) {
+                        OctTree tree = n.getOctTree(camera);
+
+                        if(tree != null) {
+                            tree.traverse(bounds, (t) -> {
+                                resolve(t, n);                            
+                            });
+                        } else {
+                            for(int j = 0; j != n.triangleCount(); j++) {
+                                resolve(n.triangleAt(camera, j, triangle), n);
+                            }
                         }
                     }
                     return true;
