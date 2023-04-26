@@ -616,10 +616,6 @@ public class GameEditor implements org.j3d.Game.GameLoop {
         game.run();
     }
 
-    NodeComponent createComponent(int i) throws Exception {
-        return (NodeComponent)Class.forName(componentFactories[i]).getConstructors()[0].newInstance();
-    }
-
     @Override
     public void resize(Game game) throws Exception {
     }

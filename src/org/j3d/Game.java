@@ -12,12 +12,60 @@ import java.io.*;
 
 public final class Game {
 
-    public interface GameLoop {
+    public static interface GameLoop {
         void resize(Game game) throws Exception;
 
         void init(Game game) throws Exception;
 
         void render(Game game) throws Exception;
+    }
+
+    public static class PlayLoop implements GameLoop {
+
+        private File file;
+        private Scene scene;
+
+        public PlayLoop(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public void resize(Game game) throws Exception {
+        }
+    
+        @Override
+        public void init(Game game) throws Exception {
+            scene = Serializer.deserialize(game, false, file);
+        }
+    
+        @Override
+        public void render(Game game) throws Exception {
+            scene.render(game);
+
+            File f = scene.getLoadFile();
+
+            if(f != null) {
+                scene = null;
+                game.assets().clear();
+                scene = Serializer.deserialize(game, false, file);
+            }
+        }
+    }
+
+    public static void play(int w, int h, int scale, boolean resizable, File file) throws Exception {
+        JFrame frame = new JFrame("J3D");
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(resizable);
+        frame.setLayout(new BorderLayout());
+
+        Game game = new Game(w, h, scale, new PlayLoop(file));
+
+        frame.add(game.getPanel(), BorderLayout.CENTER);
+        frame.pack();
+        frame.setVisible(true);
+
+        game.run();
     }
 
     private class Listener implements MouseListener, MouseMotionListener, KeyListener, ComponentListener {
@@ -188,7 +236,7 @@ public final class Game {
                     ex.printStackTrace(System.out);
                 } finally {
                     if(g2D != null) {
-                        g2D.dispose();;
+                        g2D.dispose();
                     }
                 }
 

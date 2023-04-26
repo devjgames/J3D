@@ -16,6 +16,5 @@ public class App {
             FireLight.class.getName(),
             Player.class.getName()
         );
-
     }
 }
