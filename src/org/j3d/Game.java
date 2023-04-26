@@ -206,8 +206,9 @@ public final class Game {
             } catch (Exception ex) {
                 ex.printStackTrace(System.out);
             }
-    
+
             image.setRGB(0, 0, w(), h(), colorBuffer, 0, w());
+
             g2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
             g2D.drawImage(image, 0, 0, getWidth(), getHeight(), null);
