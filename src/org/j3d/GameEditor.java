@@ -321,7 +321,7 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                     File file = new File(scene.file.getParentFile(), IO.fileNameWithOutExtension(scene.file) + ".png");
 
                     try {
-                        mapper.light(file, scene.lightMapWidth, scene.lightMapHeight, game, scene, true);
+                        mapper.light(file, game, scene, true);
                     } catch(Exception ex) {
                         ex.printStackTrace(System.out);
                     }

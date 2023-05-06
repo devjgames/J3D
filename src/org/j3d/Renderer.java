@@ -411,7 +411,7 @@ public final class Renderer {
             nout++;
         }
         return nout;
-    }
+    }   
 
     private void fill(int off) {
         int xpix, ypix, sr, sg, sb, sa, dr, dg, db, x, y, max;

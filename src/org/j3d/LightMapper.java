@@ -14,9 +14,11 @@ public class LightMapper {
     private Vector<Node> lights = new Vector<>();
     private Triangle triangle = new Triangle();
 
-    public void light(File file, int width, int height, Game game, Scene scene, boolean deleteLightMap) throws Exception {
+    public void light(File file, Game game, Scene scene, boolean deleteLightMap) throws Exception {
         int[] xy = new int[] { 0, 0 };
         int[] maxH = new int[] { 0 };
+        int width = scene.lightMapWidth;
+        int height = scene.lightMapHeight;
         Vec2 pixelSize = new Vec2(1, 1).div(width, height);
         int[] pixels = null;
         BufferedImage image = null;
@@ -75,17 +77,13 @@ public class LightMapper {
                 Vertex v3 = mesh.vertexAt(mesh.polygonIndexAt(i, 2));
                 Vec3 e1 = new Vec3();
                 Vec3 e2 = new Vec3();
-                Vec3 p1 = new Vec3(v1.position);
-                Vec3 p2 = new Vec3(v2.position);
-                Vec3 p3 = new Vec3(v3.position);
-                Vec3 n1 = new Vec3(v1.normal);
-                Vec3 n2 = new Vec3(v2.normal);
-                Vec3 n3 = new Vec3(v3.normal);
+                Vec3 p1 = new Vec3(v1.position).transform(renderable.model, new Vec3(v1.position));
+                Vec3 p2 = new Vec3(v2.position).transform(renderable.model, new Vec3(v2.position));
+                Vec3 p3 = new Vec3(v3.position).transform(renderable.model, new Vec3(v3.position));
+                Vec3 n1 = new Vec3(v1.normal).transform(renderable.modelIT, v1.normal).normalize();
+                Vec3 n2 = new Vec3(v2.normal).transform(renderable.modelIT, v2.normal).normalize();
+                Vec3 n3 = new Vec3(v3.normal).transform(renderable.modelIT, v3.normal).normalize();
                 Vec3 normal = new Vec3();
-
-                p1.add(renderable.position);
-                p2.add(renderable.position);
-                p3.add(renderable.position);
 
                 p2.sub(p1, e1).normalize();
                 p3.sub(p2, e2).normalize();
@@ -99,7 +97,7 @@ public class LightMapper {
 
                 for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
                     Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
-                    Vec3 p = new Vec3(v.position).add(renderable.position);
+                    Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
                     float x = p.dot(e1);
                     float y = p.dot(e2);
 
@@ -120,7 +118,7 @@ public class LightMapper {
                 }
                 for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
                     Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
-                    Vec3 p = new Vec3(v.position).add(renderable.position);
+                    Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
                     float x = (int)p.dot(e1);
                     float y = (int)p.dot(e2);
 

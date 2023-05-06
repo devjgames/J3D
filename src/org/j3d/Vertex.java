@@ -59,7 +59,7 @@ public class Vertex {
         float a = ambientColor.w;
         float m;
         tPosition.transform(model, position);
-        tNormal.transform(modelIT, normal).normalize();
+        tNormal.transformNormal(modelIT, normal).normalize();
         for(int i = 0; i != lightCount; i++) {
             Node light = lights.get(i);
             float ox = light.absolutePosition.x - tPosition.x;
