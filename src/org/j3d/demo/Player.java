@@ -18,15 +18,11 @@ public class Player extends NodeComponent implements ContactListener {
     public float offset = 75;
 
     private Collider collider = new Collider();
-    private Sound jump, pain;
+    private Sound jump;
     private float[] time = new float[1];
     private Vec3 origin = new Vec3();
     private Vec3 direction = new Vec3();
-    private Vec3 startPosition = new Vec3();
-    private Vec3 startOffset = new Vec3();
     private Texture font;
-    private boolean dead = false;
-    private float seconds = 2;
 
     @Override
     public void init() throws Exception {
@@ -37,19 +33,14 @@ public class Player extends NodeComponent implements ContactListener {
         jump = game().assets().load(IO.file("assets/jump.wav"));
         jump.setVolume(0.75f);
 
-        pain = game().assets().load(IO.file("assets/pain.wav"));
-        pain.setVolume(0.75f);
-
         font = game().assets().load(IO.file("assets/font.png"));
 
         scene().camera.calcOffset();
         scene().camera.offset.normalize().scale(offset);
-        startOffset.set(scene().camera.offset);
         scene().camera.target.set(node().position);
         scene().camera.target.add(scene().camera.offset, scene().camera.eye);
 
         collider.addContactListener(this);
-        startPosition.set(node().position);
     }
 
     @Override
@@ -58,21 +49,6 @@ public class Player extends NodeComponent implements ContactListener {
             return;
         }
 
-        if(dead) {
-            seconds -= game().elapsedTime();
-            if(seconds <= 0) {
-                dead = false;
-                node().position.set(startPosition);
-                scene().camera.offset.set(startOffset);
-                scene().camera.target.set(node().position);
-                scene().camera.target.add(scene().camera.offset, scene().camera.eye);
-                scene().camera.up.set(0, 1, 0);
-                node().childAt(0).getAnimatedMesh().setSequence(0, 39, 9, true);
-            }
-            if(dead) {
-                return;
-            }
-        }
         if(game().buttonDown(2)) {
             scene().camera.rotate(game().dX(), game().dY());
         }
@@ -84,7 +60,7 @@ public class Player extends NodeComponent implements ContactListener {
             }
         }
         boolean moving = collider.move(scene().camera, scene().root, node(), game());
-        if((!collider.getOnGround() && jumpAmount > 0) || dead) {
+        if(!collider.getOnGround() && jumpAmount > 0) {
             node().childAt(0).getAnimatedMesh().setSequence(66, 68, 7, false);
         } else if(moving) {
             node().childAt(0).getAnimatedMesh().setSequence(40, 45, 10, true);
@@ -117,10 +93,6 @@ public class Player extends NodeComponent implements ContactListener {
 
     @Override
     public void contactMade(Collider collider, Node node, Triangle triangle) {
-        if(triangle.tag == 2 && !dead) {
-            dead = true;
-            seconds = 2;
-            pain.play(false);
-        }
+
     }
 }
