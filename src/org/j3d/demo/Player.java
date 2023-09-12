@@ -34,10 +34,10 @@ public class Player extends NodeComponent implements ContactListener {
             return;
         }
 
-        jump = game().assets().load(IO.file("assets/sound/jump.wav"));
+        jump = game().assets().load(IO.file("assets/jump.wav"));
         jump.setVolume(0.75f);
 
-        pain = game().assets().load(IO.file("assets/sound/pain.wav"));
+        pain = game().assets().load(IO.file("assets/pain.wav"));
         pain.setVolume(0.75f);
 
         font = game().assets().load(IO.file("assets/font.png"));

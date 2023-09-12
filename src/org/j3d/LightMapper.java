@@ -75,58 +75,87 @@ public class LightMapper {
                 Vertex v1 = mesh.vertexAt(mesh.polygonIndexAt(i, 0));
                 Vertex v2 = mesh.vertexAt(mesh.polygonIndexAt(i, 1));
                 Vertex v3 = mesh.vertexAt(mesh.polygonIndexAt(i, 2));
-                Vec3 e1 = new Vec3();
-                Vec3 e2 = new Vec3();
+                Vertex v4 = null;
                 Vec3 p1 = new Vec3(v1.position).transform(renderable.model, new Vec3(v1.position));
                 Vec3 p2 = new Vec3(v2.position).transform(renderable.model, new Vec3(v2.position));
                 Vec3 p3 = new Vec3(v3.position).transform(renderable.model, new Vec3(v3.position));
+                Vec3 p4 = null;
+                Vec3 e1 = new Vec3();
+                Vec3 e2 = new Vec3();
                 Vec3 n1 = new Vec3(v1.normal).transform(renderable.modelIT, v1.normal).normalize();
                 Vec3 n2 = new Vec3(v2.normal).transform(renderable.modelIT, v2.normal).normalize();
                 Vec3 n3 = new Vec3(v3.normal).transform(renderable.modelIT, v3.normal).normalize();
+                Vec3 n4 = null;
                 Vec3 normal = new Vec3();
+                int w = 0, h = 0;
 
-                p2.sub(p1, e1).normalize();
-                p3.sub(p2, e2).normalize();
-                e1.cross(e2, normal).normalize();
-                normal.cross(e1, e2).normalize();
+                if(mesh.polygonIndexCount(i) == 4 && scene.lightMapQuadsMode) {
+                    v4 = mesh.vertexAt(mesh.polygonIndexAt(i, 3));
+                    n4 = new Vec3(v4.normal).transform(renderable.modelIT, v4.normal).normalize();
+                    p4 = new Vec3(v4.position).transform(renderable.model, new Vec3(v4.position));
+                    p2.sub(p1, e1);
+                    p3.sub(p2, e2);
 
-                float x1 = Float.MAX_VALUE;
-                float y1 = Float.MAX_VALUE;
-                float x2 = -Float.MAX_VALUE;
-                float y2 = -Float.MAX_VALUE;
+                    w = Math.max(1, (int)Math.floor(e1.length() / 16));
+                    h = Math.max(1, (int)Math.floor(e2.length() / 16));
 
-                for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
-                    Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
-                    Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
-                    float x = p.dot(e1);
-                    float y = p.dot(e2);
+                    if(!allocate(xy, w, h, maxH, width, height)) {
+                        throw new Exception("failed to allocate light map tile");
+                    }
 
-                    x1 = Math.min(x, x1);
-                    y1 = Math.min(y, y1);
-                    x2 = Math.max(x, x2);
-                    y2 = Math.max(y, y2);
-                }
+                    v1.textureCoordinate2.x = (xy[0] + 0.5f) * pixelSize.x;
+                    v1.textureCoordinate2.y = (xy[1] + 0.5f) * pixelSize.y;
+                    v2.textureCoordinate2.x = (xy[0] + w - 0.5f) * pixelSize.x;
+                    v2.textureCoordinate2.y = (xy[1] + 0.5f) * pixelSize.y;
+                    v3.textureCoordinate2.x = (xy[0] + w - 0.5f) * pixelSize.x;
+                    v3.textureCoordinate2.y = (xy[1] + h - 0.5f) * pixelSize.y;
+                    v4.textureCoordinate2.x = (xy[0] + 0.5f) * pixelSize.x;
+                    v4.textureCoordinate2.y = (xy[1] + h - 0.5f) * pixelSize.y;
+                } else {
 
-                int w = (int)(x2 - x1) / 16 + 1;
-                int h = (int)(y2 - y1) / 16 + 1;
+                    p2.sub(p1, e1).normalize();
+                    p3.sub(p2, e2).normalize();
+                    e1.cross(e2, normal).normalize();
+                    normal.cross(e1, e2).normalize();
 
-                w = Math.max(1, w);
-                h = Math.max(1, h);
+                    float x1 = Float.MAX_VALUE;
+                    float y1 = Float.MAX_VALUE;
+                    float x2 = -Float.MAX_VALUE;
+                    float y2 = -Float.MAX_VALUE;
 
-                if(!allocate(xy, w, h, maxH, width, height)) {
-                    throw new Exception("failed to allocate light map tile");
-                }
-                for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
-                    Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
-                    Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
-                    float x = (int)p.dot(e1);
-                    float y = (int)p.dot(e2);
+                    for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
+                        Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
+                        Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
+                        float x = p.dot(e1);
+                        float y = p.dot(e2);
 
-                    x = (int)(x - x1) / 16;
-                    y = (int)(y - y1) / 16;
-                    x = (xy[0] + x) * pixelSize.x;
-                    y = (xy[1] + y) * pixelSize.y;
-                    v.textureCoordinate2.set(x, y);
+                        x1 = Math.min(x, x1);
+                        y1 = Math.min(y, y1);
+                        x2 = Math.max(x, x2);
+                        y2 = Math.max(y, y2);
+                    }
+
+                    w = (int)(x2 - x1) / 16 + 1;
+                    h = (int)(y2 - y1) / 16 + 1;
+
+                    w = Math.max(1, w);
+                    h = Math.max(1, h);
+
+                    if(!allocate(xy, w, h, maxH, width, height)) {
+                        throw new Exception("failed to allocate light map tile");
+                    }
+                    for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
+                        Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
+                        Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
+                        float x = (int)p.dot(e1);
+                        float y = (int)p.dot(e2);
+
+                        x = (int)(x - x1) / 16;
+                        y = (int)(y - y1) / 16;
+                        x = (xy[0] + x) * pixelSize.x;
+                        y = (xy[1] + y) * pixelSize.y;
+                        v.textureCoordinate2.set(x, y);
+                    }
                 }
 
                 Vec2 t1 = mesh.vertexAt(mesh.polygonIndexAt(i, 0)).textureCoordinate2;
@@ -148,21 +177,33 @@ public class LightMapper {
                     Vec4 c = new Vec4();
                     for(int x = xy[0]; x != xy[0] + w; x++) {
                         for(int y = xy[1]; y != xy[1] + h; y++) {
-                            float tx = x / (float)width;
-                            float ty = y / (float)height;
-                            float w0 = (tx - t2.x) * (t3.y - t2.y) - (ty - t2.y) * (t3.x - t2.x);
-                            float w1 = (tx - t3.x) * (t1.y - t3.y) - (ty - t3.y) * (t1.x - t3.x);
-                            float w2 = (tx - t1.x) * (t2.y - t1.y) - (ty - t1.y) * (t2.x - t1.x);
-                            w0 /= area;
-                            w1 /= area;
-                            w2 /= area;
-                            p.x = w0 * p1.x + w1 * p3.x + w2 * p2.x;
-                            p.y = w0 * p1.y + w1 * p3.y + w2 * p2.y;
-                            p.z = w0 * p1.z + w1 * p3.z + w2 * p2.z;
-                            n.x = w0 * n1.x + w1 * n3.x + w2 * n2.x;
-                            n.y = w0 * n1.y + w1 * n3.y + w2 * n2.y;
-                            n.z = w0 * n1.z + w1 * n3.z + w2 * n2.z;
-                            n.normalize();
+                            if(mesh.polygonIndexCount(i) == 4 && scene.lightMapQuadsMode) {
+                                float tx = (x - xy[0] + 0.5f) / (float)w;
+                                float ty = (y - xy[1] + 0.5f) / (float)h;
+
+                                p1.lerp(p2, tx, e1);
+                                p4.lerp(p3, tx, e2);
+                                e1.lerp(e2, ty, p);
+                                n1.lerp(n2, tx, e1);
+                                n4.lerp(n3, tx, e2);
+                                e1.lerp(e2, ty, n).normalize();
+                            } else {
+                                float tx = x / (float)width;
+                                float ty = y / (float)height;
+                                float w0 = (tx - t2.x) * (t3.y - t2.y) - (ty - t2.y) * (t3.x - t2.x);
+                                float w1 = (tx - t3.x) * (t1.y - t3.y) - (ty - t3.y) * (t1.x - t3.x);
+                                float w2 = (tx - t1.x) * (t2.y - t1.y) - (ty - t1.y) * (t2.x - t1.x);
+                                w0 /= area;
+                                w1 /= area;
+                                w2 /= area;
+                                p.x = w0 * p1.x + w1 * p3.x + w2 * p2.x;
+                                p.y = w0 * p1.y + w1 * p3.y + w2 * p2.y;
+                                p.z = w0 * p1.z + w1 * p3.z + w2 * p2.z;
+                                n.x = w0 * n1.x + w1 * n3.x + w2 * n2.x;
+                                n.y = w0 * n1.y + w1 * n3.y + w2 * n2.y;
+                                n.z = w0 * n1.z + w1 * n3.z + w2 * n2.z;
+                                n.normalize();
+                            }
                             c.set(renderable.ambientColor);
 
                             for(Node light : lights) {

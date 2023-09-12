@@ -10,7 +10,11 @@ public class NodeLoader implements AssetLoader {
 
     @Override
     public Object load(File file, AssetManager assets) throws Exception {
-        String[] lines = new String(IO.readAllBytes(file)).split("\\n+");
+        return load(file, new String(IO.readAllBytes(file)), true, assets);
+    }
+
+    public static Node load(File file, String text, boolean center, AssetManager assets) throws Exception {
+        String[] lines = text.split("\\n+");
         Vector<Vec4> vList = new Vector<>();
         Vector<Vec2> tList = new Vector<>();
         Vector<Vec3> nList = new Vector<>();
@@ -99,17 +103,20 @@ public class NodeLoader implements AssetLoader {
                 for(Vertex v : vertices) {
                     bounds.add(new Vec3(v.position));
                 }
-                Vec3 center = new Vec3();
 
-                bounds.center(center);
-                center.neg();
-                
-                for(Vertex v : vertices) {
-                    v.position.add(center.x, center.y, center.z, 0);
+                if(center) {
+                    Vec3 c = new Vec3();
+
+                    bounds.center(c);
+                    c.neg();
+                    
+                    for(Vertex v : vertices) {
+                        v.position.add(c.x, c.y, c.z, 0);
+                    }
+                    c.neg();
+
+                    node.position.set(c);
                 }
-                center.neg();
-
-                node.position.set(center);
 
                 node.renderable = new Mesh(vertices.toArray(new Vertex[vertices.size()]), indices, polygons);
                 if(textures.contains(key)) {
@@ -122,7 +129,7 @@ public class NodeLoader implements AssetLoader {
         return root;
     }
 
-    private void loadMaterials(File file, Hashtable<String, String> materials) throws Exception {
+    private static void loadMaterials(File file, Hashtable<String, String> materials) throws Exception {
         String[] lines = new String(IO.readAllBytes(file)).split("\\n+");
         String name = null;
 

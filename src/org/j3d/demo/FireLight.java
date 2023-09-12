@@ -2,7 +2,6 @@ package org.j3d.demo;
 
 import java.util.Random;
 
-import org.j3d.IO;
 import org.j3d.NodeComponent;
 import org.j3d.Particle;
 import org.j3d.ParticleSystem;
@@ -15,7 +14,6 @@ public class FireLight extends NodeComponent {
     @Override
     public void init() throws Exception {
         node().renderable = new ParticleSystem(25);
-        node().texture = game().assets().load(IO.file("assets/maps/particle.png"));
         node().blendEnabled = true;
         node().additiveBlend = true;
         node().depthWriteEnabled = false;

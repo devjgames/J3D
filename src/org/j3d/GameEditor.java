@@ -695,9 +695,11 @@ public class GameEditor implements org.j3d.Game.GameLoop {
                                 }
                             }
                             if(n.isLight) {
-                                bounds.min.set(n.absolutePosition).sub(8, 8, 8);
-                                bounds.max.set(n.absolutePosition).add(8, 8, 8);
-                                if(bounds.intersects(origin, direction, time)) {
+                                Node ui = scene.getUI();
+                    
+                                ui.position.set(n.absolutePosition);
+                                ui.calcBoundsAndTransform(null);
+                                if(ui.bounds.intersects(origin, direction, time)) {
                                     selected = n;
                                 }
                             }

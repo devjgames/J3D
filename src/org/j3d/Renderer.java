@@ -1,28 +1,6 @@
 package org.j3d;
 
-import java.util.Vector;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ForkJoinPool;
-
 public final class Renderer {
-
-    private class Processor implements Callable<Void> {
-
-        private final Renderer renderer;
-        private final int processor;
-
-        public Processor(Renderer renderer, int processor) {
-            this.renderer = renderer;
-            this.processor = processor;
-        }
-
-        @Override
-        public Void call() {
-            renderer.step = renderer.processors.size();
-            renderer.fill(processor);
-            return null;
-        }
-    }
 
     public CullState cullState = CullState.BACK;
     public boolean depthTestEnabled = true;
@@ -57,10 +35,7 @@ public final class Renderer {
     private final Vertex v1 = new Vertex();
     private final Vertex v2 = new Vertex();
     private final Vertex v3 = new Vertex();
-    private final Vector<Processor> processors;
-    private final ForkJoinPool pool;
 
-    private int step;
     private int x1, y1, x2, y2;
     private float r1, g1, b1, a1;
     private float r2, g2, b2, a2;
@@ -88,12 +63,6 @@ public final class Renderer {
             inVerts[i] = new Vertex();
             outVerts[i] = new Vertex();
         }
-        pool = ForkJoinPool.commonPool();
-        processors = new Vector<>(Math.max(1, pool.getParallelism()));
-        for(int i = 0; i != processors.capacity(); i++) {
-            processors.add(new Processor(this, i));
-        }
-        System.out.println("render processors = " + processors.size());
     }
 
     void resize() {
@@ -363,16 +332,8 @@ public final class Renderer {
         v2.textureCoordinate2.scale(p2w, s2);
         v3.textureCoordinate2.scale(p3w, s3);
 
-        int n = (x2 - x1) * (y2 - y1);
-
-        if(n <= 0) {
-            return 0;
-        } else if(n > 1000 && processors.size() > 1) {
-            pool.invokeAll(processors);
-        } else {
-            step = 1;
-            fill(0);
-        }
+        fill();
+        
         return 1;
     }
 
@@ -413,13 +374,13 @@ public final class Renderer {
         return nout;
     }   
 
-    private void fill(int off) {
+    private void fill() {
         int xpix, ypix, sr, sg, sb, sa, dr, dg, db, x, y, max;
         float w0, w1, w2, z, d, u, v;
         float p4x, p4y;
         int n = (x2 - x1) * (y2 - y1);
         float r, g, b, a;
-        for(int i = off; i < n; i += step) {
+        for(int i = 0; i < n; i++) {
             x = i % (x2 - x1) + x1;
             y = i / (x2 - x1) + y1;
             p4x = (float) x + 0.5f;

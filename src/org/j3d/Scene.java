@@ -1,6 +1,7 @@
 package org.j3d;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Vector;
 
 public final class Scene  {
@@ -17,6 +18,8 @@ public final class Scene  {
     public int snap = 1;
     public int lightMapWidth = 128;
     public int lightMapHeight = 128;
+    public boolean lightMapQuadsMode = false;
+    public boolean lightMapLinear = false;
 
     private int trianglesRendered = 0;
     private Node ui = null;
@@ -25,24 +28,24 @@ public final class Scene  {
     public Scene(File file, boolean inDesign, Game game) throws Exception {
         this.file = file;
         if(inDesign) {
-            ui = game.assets().load(IO.file("assets/ui/cube.obj"));
+            InputStream input = null;
+
+            ui = NodeLoader.load(IO.file("ui.obj"), new String(IO.readAllBytes(Scene.class, "/org/j3d/resources/ui.obj")), false, game.assets());
             ui = ui.childAt(0);
-            ui.renderable = ui.getMesh().newInstance();
+            ui.scale.set(0.5f, 0.5f, 0.5f);
 
-            Mesh mesh = ui.getMesh();
-
-            for(int i = 0; i != mesh.vertexCount(); i++) {
-                Vertex v = mesh.vertexAt(i);
-
-                if(Math.abs(v.normal.x) > 0.5) {
-                    v.color.set(1, 0, 0, 1);
-                } else if(Math.abs(v.normal.y) > 0.5) {
-                    v.color.set(0, 1, 0, 1);
-                } else {
-                    v.color.set(0, 0, 1, 1);
+            try {
+                ui.texture = Texture.load(input = Scene.class.getResourceAsStream("/org/j3d/resources/colors.png"));
+            } finally {
+                if(input != null) {
+                    input.close();
                 }
             }
         }
+    }
+
+    public Node getUI() {
+        return ui;
     }
 
     public boolean inDesign() {
@@ -150,13 +153,14 @@ public final class Scene  {
         });
 
         if(ui != null) {
+            game.renderer().texture = ui.texture;
             if(drawLights) {
                 for(Node light : lights) {
-                    game.renderer().model.toIdentity().translate(light.absolutePosition).scale(0.5f, 0.5f, 0.5f);
+                    game.renderer().model.toIdentity().translate(light.absolutePosition).scale(ui.scale);
                     ui.getMesh().render(ui, camera, game.renderer());
                 }
             }
-            game.renderer().model.toIdentity().translate(camera.target).scale(0.5f, 0.5f, 0.5f);
+            game.renderer().model.toIdentity().translate(camera.target).scale(ui.scale);
             ui.getMesh().render(ui, camera, game.renderer());
         }
         for (Node renderable : renderables) {

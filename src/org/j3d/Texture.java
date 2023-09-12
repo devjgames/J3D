@@ -4,6 +4,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class Texture {
 
@@ -38,8 +39,20 @@ public class Texture {
         return texture;
     }
 
+    public static Texture load(InputStream input) throws IOException {
+        BufferedImage image = ImageIO.read(input);
+        Texture texture = new Texture(image.getWidth(), image.getHeight(), null);
+
+        image.getRGB(0, 0, texture.w, texture.h, texture.pixels, 0, texture.w);
+
+        return texture;
+    }
+
     @Override
     public String toString() {
-        return file.getPath();
+        if(file != null) {
+            return file.getPath();
+        }
+        return "Texture";
     }
 }
