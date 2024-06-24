@@ -1,8 +1,6 @@
 package org.j3d.demo;
 
-import org.j3d.Game;
 import org.j3d.GameEditor;
-import org.j3d.IO;
 import org.j3d.Utils;
 
 public class App {
