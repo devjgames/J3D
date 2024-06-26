@@ -28,7 +28,6 @@ public final class Node implements Iterable<Node> {
     public boolean additiveBlend = false;
     public boolean depthWriteEnabled = true;
     public boolean depthTestEnabled = true;
-    public boolean maskEnabled = false;
     public boolean collidable = false;
     public boolean dynamic = false;
     public Texture texture = null;

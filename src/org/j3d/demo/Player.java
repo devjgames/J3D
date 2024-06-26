@@ -5,16 +5,15 @@ import org.j3d.IO;
 import org.j3d.Node;
 import org.j3d.NodeComponent;
 import org.j3d.Sound;
-import org.j3d.Texture;
 import org.j3d.Triangle;
 import org.j3d.Vec3;
 import org.j3d.Collider.ContactListener;
-
-import java.awt.event.KeyEvent;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 public class Player extends NodeComponent implements ContactListener {
 
-    public int jumpAmount = 800;
+    public int jumpAmount = 900;
     public float offset = 75;
 
     private Collider collider = new Collider();
@@ -22,7 +21,6 @@ public class Player extends NodeComponent implements ContactListener {
     private float[] time = new float[1];
     private Vec3 origin = new Vec3();
     private Vec3 direction = new Vec3();
-    private Texture font;
 
     @Override
     public void init() throws Exception {
@@ -32,8 +30,6 @@ public class Player extends NodeComponent implements ContactListener {
 
         jump = game().assets().load(IO.file("assets/jump.wav"));
         jump.setVolume(0.75f);
-
-        font = game().assets().load(IO.file("assets/font.png"));
 
         scene().camera.calcOffset();
         scene().camera.offset.normalize().scale(offset);
@@ -49,11 +45,11 @@ public class Player extends NodeComponent implements ContactListener {
             return;
         }
 
-        if(game().buttonDown(2)) {
-            scene().camera.rotate(game().dX(), game().dY());
+        if(Mouse.isButtonDown(1)) {
+            scene().camera.rotate(-Mouse.getDX(), -Mouse.getDY());
         }
         if(jumpAmount > 0) {
-            boolean down = game().keyDown(KeyEvent.VK_SPACE);
+            boolean down = Keyboard.isKeyDown(Keyboard.KEY_SPACE);
             if(down && collider.getOnGround()) {
                 collider.velocity.y = jumpAmount;
                 jump.play(false);
@@ -80,15 +76,6 @@ public class Player extends NodeComponent implements ContactListener {
         }
         direction.scale(d);
         scene().camera.target.add(direction, scene().camera.eye);
-    }
-
-    @Override
-    public void renderSprites() throws Exception {
-        if(scene().inDesign()) {
-            return;
-        }
-
-        game().renderer().render(font, "C=" + collider.getTested(), 10, 12, 16, 0, 5, game().h() - 17, 1, 1, 1, 1);
     }
 
     @Override

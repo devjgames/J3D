@@ -7,7 +7,7 @@ public class ParticleSystem extends Renderable {
 
     public final Vec3 emitPosition = new Vec3();
 
-    private Vertex[] vertices;
+    private SceneVertex[] vertices;
     private int[] indices;
     private float[] particles;
     private float[] temp;
@@ -20,17 +20,17 @@ public class ParticleSystem extends Renderable {
     private float time = 0;
 
     public ParticleSystem(int maxParticles) {
-        vertices = new Vertex[maxParticles * 4];
+        vertices = new SceneVertex[maxParticles * 4];
         indices = new int[maxParticles * 6];
         particles = new float[maxParticles * 20];
         temp = new float[maxParticles * 20];
         count = 0;
 
         for(int i = 0; i != vertices.length; ) {
-            vertices[i++] = new Vertex(0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0);
-            vertices[i++] = new Vertex(0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0);
-            vertices[i++] = new Vertex(0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0);
-            vertices[i++] = new Vertex(0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0);
+            vertices[i++] = new SceneVertex(0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0);
+            vertices[i++] = new SceneVertex(0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0);
+            vertices[i++] = new SceneVertex(0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0);
+            vertices[i++] = new SceneVertex(0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0);
         }
         for(int i = 0, j = 0; i != vertices.length; i += 4) {
             indices[j++] = i;
@@ -110,7 +110,7 @@ public class ParticleSystem extends Renderable {
             vertices[j + 3].color.set(cR, cG, cB, cA);
             vertices[j + 3].normal.set(f);
             for(int k = 0; k != 4; k++) {
-                Vertex v = vertices[j++];
+                SceneVertex v = vertices[j++];
                 bounds.add(v.position.x, v.position.y, v.position.z);
             }
         }

@@ -72,10 +72,10 @@ public class LightMapper {
             Mesh mesh = renderable.getMesh();
 
             for(int i = 0; i != mesh.polygonCount(); i++) {
-                Vertex v1 = mesh.vertexAt(mesh.polygonIndexAt(i, 0));
-                Vertex v2 = mesh.vertexAt(mesh.polygonIndexAt(i, 1));
-                Vertex v3 = mesh.vertexAt(mesh.polygonIndexAt(i, 2));
-                Vertex v4 = null;
+                SceneVertex v1 = mesh.vertexAt(mesh.polygonIndexAt(i, 0));
+                SceneVertex v2 = mesh.vertexAt(mesh.polygonIndexAt(i, 1));
+                SceneVertex v3 = mesh.vertexAt(mesh.polygonIndexAt(i, 2));
+                SceneVertex v4 = null;
                 Vec3 p1 = new Vec3(v1.position).transform(renderable.model, new Vec3(v1.position));
                 Vec3 p2 = new Vec3(v2.position).transform(renderable.model, new Vec3(v2.position));
                 Vec3 p3 = new Vec3(v3.position).transform(renderable.model, new Vec3(v3.position));
@@ -124,7 +124,7 @@ public class LightMapper {
                     float y2 = -Float.MAX_VALUE;
 
                     for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
-                        Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
+                        SceneVertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
                         Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
                         float x = p.dot(e1);
                         float y = p.dot(e2);
@@ -145,7 +145,7 @@ public class LightMapper {
                         throw new Exception("failed to allocate light map tile");
                     }
                     for(int j = 0; j != mesh.polygonIndexCount(i); j++) {
-                        Vertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
+                        SceneVertex v = mesh.vertexAt(mesh.polygonIndexAt(i, j));
                         Vec3 p = new Vec3(v.position).transform(renderable.model, new Vec3(v.position));
                         float x = (int)p.dot(e1);
                         float y = (int)p.dot(e2);

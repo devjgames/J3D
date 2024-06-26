@@ -2,7 +2,7 @@ package org.j3d;
 
 import java.util.Vector;
 
-public class Vertex {
+public class SceneVertex {
     
     private static Vec4 tPosition = new Vec4();
     private static Vec3 tNormal = new Vec3();
@@ -13,18 +13,18 @@ public class Vertex {
     public final Vec4 color = new Vec4(1, 1, 1, 1);
     public final Vec3 normal = new Vec3();
 
-    public Vertex() {
+    public SceneVertex() {
     }
 
-    public Vertex(float x, float y, float z, float w, float s, float t, float u, float v, float r, float g, float b, float a, float nx, float ny, float nz) {
+    public SceneVertex(float x, float y, float z, float w, float s, float t, float u, float v, float r, float g, float b, float a, float nx, float ny, float nz) {
         set(x, y, z, w, s, t, u, v, r, g, b, a, nx, ny, nz);
     }
 
-    public Vertex(Vec4 position, Vec2 textureCoordinate, Vec2 textureCoordinate2, Vec4 color, Vec3 normal) {
+    public SceneVertex(Vec4 position, Vec2 textureCoordinate, Vec2 textureCoordinate2, Vec4 color, Vec3 normal) {
         set(position, textureCoordinate, textureCoordinate2, color, normal);
     }
 
-    public Vertex(Vertex v) {
+    public SceneVertex(SceneVertex v) {
         set(v);
     }
 
@@ -44,7 +44,7 @@ public class Vertex {
         this.normal.set(normal);
     }
 
-    public void set(Vertex v) {
+    public void set(SceneVertex v) {
         position.set(v.position);
         textureCoordinate.set(v.textureCoordinate);
         textureCoordinate2.set(v.textureCoordinate2);

@@ -1,6 +1,5 @@
 package org.j3d;
 
-import javax.swing.UIManager.*;
 import javax.swing.*;
 import java.lang.reflect.*;
 import java.io.*;
@@ -93,18 +92,6 @@ public class Utils {
                     }
                 }
             }
-        }
-    }
-
-    public static void setNimbusLookAndFeel() {
-        try {
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (Exception e) {
         }
     }
 

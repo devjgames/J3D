@@ -1,5 +1,7 @@
 package org.j3d;
 
+import java.nio.FloatBuffer;
+
 public final class Mat4 {
 
     public float m00, m01, m02, m03;
@@ -311,6 +313,26 @@ public final class Mat4 {
         m31 = Float.parseFloat(tokens[i++]);
         m32 = Float.parseFloat(tokens[i++]);
         m33 = Float.parseFloat(tokens[i]);
+    }
+    
+    public void put(FloatBuffer fBuf) {
+        fBuf.put(m00);
+        fBuf.put(m10);
+        fBuf.put(m20);
+        fBuf.put(m30);
+        fBuf.put(m01);
+        fBuf.put(m11);
+        fBuf.put(m21);
+        fBuf.put(m31);
+        fBuf.put(m02);
+        fBuf.put(m12);
+        fBuf.put(m22);
+        fBuf.put(m32);
+        fBuf.put(m03);
+        fBuf.put(m13);
+        fBuf.put(m23);
+        fBuf.put(m33);
+        fBuf.flip();
     }
 
     @Override

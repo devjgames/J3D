@@ -19,7 +19,6 @@ public final class Scene  {
     public int lightMapWidth = 128;
     public int lightMapHeight = 128;
     public boolean lightMapQuadsMode = false;
-    public boolean lightMapLinear = false;
 
     private int trianglesRendered = 0;
     private Node ui = null;
@@ -154,6 +153,7 @@ public final class Scene  {
 
         if(ui != null) {
             game.renderer().texture = ui.texture;
+            game.renderer().setState();
             if(drawLights) {
                 for(Node light : lights) {
                     game.renderer().model.toIdentity().translate(light.absolutePosition).scale(ui.scale);
@@ -167,23 +167,18 @@ public final class Scene  {
             game.renderer().model.set(renderable.model);
             game.renderer().depthWriteEnabled = renderable.depthWriteEnabled;
             game.renderer().depthTestEnabled = renderable.depthTestEnabled;
-            game.renderer().maskEnabled = renderable.maskEnabled;
             game.renderer().blendEnabled = renderable.blendEnabled;
             game.renderer().additiveBlend = renderable.additiveBlend;
             game.renderer().texture = renderable.texture;
             game.renderer().texture2 = renderable.texture2;
             game.renderer().cullState = renderable.cullState;
+            game.renderer().setState();
             if(renderable.lightingEnabled) {
                 renderable.renderable.light(lights, Math.min(maxLights, lights.size()), renderable, camera, renderable.ambientColor, renderable.diffuseColor);
-            } else if(renderable.renderable instanceof Mesh) {
-                Mesh mesh = renderable.getMesh();
-
-                for(int i = 0; i != mesh.vertexCount(); i++) {
-                    mesh.vertexAt(i).color.set(renderable.color);
-                }
             }
             trianglesRendered += renderable.renderable.render(renderable, camera, game.renderer());
         }
+        game.renderer().setupSprites();
         root.traverse((n) -> {
             if(n.visible) {
                 for(int i = 0; i != n.componentCount(); i++) {

@@ -18,7 +18,7 @@ public class NodeLoader implements AssetLoader {
         Vector<Vec4> vList = new Vector<>();
         Vector<Vec2> tList = new Vector<>();
         Vector<Vec3> nList = new Vector<>();
-        Hashtable<String, Vector<Vertex>> keyedVertices = new Hashtable<>();
+        Hashtable<String, Vector<SceneVertex>> keyedVertices = new Hashtable<>();
         Hashtable<String, Vector<Integer>> keyedIndices = new  Hashtable<>();
         Hashtable<String, Vector<Vector<Integer>>> keyedPolygons = new Hashtable<>();
         Hashtable<String, String> materials = new Hashtable<>();
@@ -51,7 +51,7 @@ public class NodeLoader implements AssetLoader {
                     keyedIndices.put(material, new Vector<>());
                     keyedPolygons.put(material, new Vector<>());
                 }
-                Vector<Vertex> vertices = keyedVertices.get(material);
+                Vector<SceneVertex> vertices = keyedVertices.get(material);
                 Vector<Integer> indices = keyedIndices.get(material);
                 Vector<Vector<Integer>> polygons = keyedPolygons.get(material);
                 int bV = vertices.size();
@@ -62,7 +62,7 @@ public class NodeLoader implements AssetLoader {
                     int vI = Integer.parseInt(iTokens[0]) - 1;
                     int tI = Integer.parseInt(iTokens[1]) - 1;
                     int nI = Integer.parseInt(iTokens[2]) - 1;
-                    Vertex vertex = new Vertex(vList.get(vI), tList.get(tI), new Vec2(0, 0), new Vec4(1, 1, 1, 1), nList.get(nI));
+                    SceneVertex vertex = new SceneVertex(vList.get(vI), tList.get(tI), new Vec2(0, 0), new Vec4(1, 1, 1, 1), nList.get(nI));
                     vertices.add(vertex);
                     polygons.lastElement().add(bV + i - 1);
                 }
@@ -85,7 +85,7 @@ public class NodeLoader implements AssetLoader {
             Vector<Integer> vIndices = keyedIndices.get(key);
             Vector<Vector<Integer>> vPolygons = keyedPolygons.get(key);
             if(vPolygons.size() != 0) {
-                Vector<Vertex> vertices = keyedVertices.get(key);
+                Vector<SceneVertex> vertices = keyedVertices.get(key);
                 int[] indices = new int[vIndices.size()];
                 int[][] polygons = new int[vPolygons.size()][];
                 for(int i = 0; i != indices.length; i++) {
@@ -100,7 +100,7 @@ public class NodeLoader implements AssetLoader {
                 Node node = new Node();
                 AABB bounds = new AABB();
 
-                for(Vertex v : vertices) {
+                for(SceneVertex v : vertices) {
                     bounds.add(new Vec3(v.position));
                 }
 
@@ -110,7 +110,7 @@ public class NodeLoader implements AssetLoader {
                     bounds.center(c);
                     c.neg();
                     
-                    for(Vertex v : vertices) {
+                    for(SceneVertex v : vertices) {
                         v.position.add(c.x, c.y, c.z, 0);
                     }
                     c.neg();
@@ -118,7 +118,7 @@ public class NodeLoader implements AssetLoader {
                     node.position.set(c);
                 }
 
-                node.renderable = new Mesh(vertices.toArray(new Vertex[vertices.size()]), indices, polygons);
+                node.renderable = new Mesh(vertices.toArray(new SceneVertex[vertices.size()]), indices, polygons);
                 if(textures.contains(key)) {
                     node.texture = assets.load(IO.file(key));
                     node.name = IO.fileNameWithOutExtension(node.texture.file);

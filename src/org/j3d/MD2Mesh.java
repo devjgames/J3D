@@ -117,7 +117,7 @@ public class MD2Mesh extends Renderable {
     private MD2TextureCoordinate[] textureCoordinates;
     private MD2Triangle[] triangles;
     private MD2Frame[] frames;
-    private Vertex[] vertices;
+    private SceneVertex[] vertices;
     private int[] indices;
     private AABB bounds = new AABB();
     private boolean done;
@@ -152,10 +152,10 @@ public class MD2Mesh extends Renderable {
             frames[j] = new MD2Frame(bytes, i, header);
         }
 
-        vertices = new Vertex[header.numTris * 3];
+        vertices = new SceneVertex[header.numTris * 3];
         indices = new int[header.numTris * 3];
         for(int j = 0; j != indices.length; j++) {
-            vertices[j] = new Vertex();
+            vertices[j] = new SceneVertex();
             indices[j] = j;
         }
         normals = MD2Normals.cloneNormals();
@@ -173,10 +173,10 @@ public class MD2Mesh extends Renderable {
         frames = mesh.frames;
         normals = mesh.normals;
 
-        vertices = new Vertex[header.numTris * 3];
+        vertices = new SceneVertex[header.numTris * 3];
         indices = new int[header.numTris * 3];
         for(int i = 0; i != indices.length; i++) {
-            vertices[i] = new Vertex();
+            vertices[i] = new SceneVertex();
             indices[i] = i;
         }
 
@@ -282,7 +282,7 @@ public class MD2Mesh extends Renderable {
                 float nx2 = normals[frames[f2].vertices[triangles[i].xyz[j]].n][0];
                 float ny2 = normals[frames[f2].vertices[triangles[i].xyz[j]].n][1];
                 float nz2 = normals[frames[f2].vertices[triangles[i].xyz[j]].n][2];
-                Vertex v = vertices[k];
+                SceneVertex v = vertices[k];
 
                 v.position.x = vx1 + amount * (vx2 - vx1);
                 v.position.y = vy1 + amount * (vy2 - vy1);
@@ -300,7 +300,7 @@ public class MD2Mesh extends Renderable {
 
     @Override
     public void light(Vector<Node> lights, int lightCount, Node node, Camera camera, Vec4 ambientColor, Vec4 diffuseColor) {  
-        for(Vertex v : vertices) {
+        for(SceneVertex v : vertices) {
             v.light(lights, lightCount, node.model, node.modelIT, ambientColor, diffuseColor);
         }    
     }

@@ -86,12 +86,12 @@ public class Serializer {
                 String[] svertices = element.getAttribute("vertices").split("\\s+");
                 String[] sindices = element.getAttribute("indices").split("\\s");
                 String[] spolygons = element.getAttribute("polygons").split("\\s+");
-                Vertex[] vertices = new Vertex[svertices.length / 15];
+                SceneVertex[] vertices = new SceneVertex[svertices.length / 15];
                 int[] indices = new int[sindices.length];
                 int[][] polygons = new int[spolygons.length][];
 
                 for(int i = 0, j = 0; i != vertices.length; i++) {
-                    vertices[i] = new Vertex(
+                    vertices[i] = new SceneVertex(
                         Float.parseFloat(svertices[j++]),
                         Float.parseFloat(svertices[j++]),
                         Float.parseFloat(svertices[j++]),
@@ -217,7 +217,7 @@ public class Serializer {
             if(mesh.indexCount() != 0) {
                 b.append(" vertices=\"");
                 for(int i = 0; i != mesh.vertexCount(); i++) {
-                    Vertex v = mesh.vertexAt(i);
+                    SceneVertex v = mesh.vertexAt(i);
 
                     if(i == 0) {
                         b.append(Utils.toString(v, "position"));

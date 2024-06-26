@@ -5,12 +5,12 @@ import java.util.Vector;
 
 public class Mesh extends Renderable {
 
-    private Vertex[] vertices = null;
+    private SceneVertex[] vertices = null;
     private int[] indices = null;
     private int[][] polygons = null;
     private AABB bounds = new AABB();
 
-    public Mesh(Vertex[] vertices, int[] indices, int[][] polygons) {
+    public Mesh(SceneVertex[] vertices, int[] indices, int[][] polygons) {
         this.vertices = vertices;
         this.indices = indices;
         this.polygons = polygons;
@@ -19,12 +19,12 @@ public class Mesh extends Renderable {
     }
 
     public Mesh(Mesh mesh) {
-        vertices = new Vertex[mesh.vertices.length];
+        vertices = new SceneVertex[mesh.vertices.length];
         indices = mesh.indices;
         polygons = mesh.polygons;
 
         for(int i = 0; i != vertices.length; i++) {
-            vertices[i] = new Vertex(mesh.vertices[i]);
+            vertices[i] = new SceneVertex(mesh.vertices[i]);
         }
         calcBounds();
     }
@@ -46,7 +46,7 @@ public class Mesh extends Renderable {
         return polygons.length;
     }
 
-    public Vertex vertexAt(int i) {
+    public SceneVertex vertexAt(int i) {
         return vertices[i];
     }
 
@@ -64,7 +64,7 @@ public class Mesh extends Renderable {
 
     public void calcBounds() {
         bounds.clear();
-        for(Vertex v : vertices) {
+        for(SceneVertex v : vertices) {
             bounds.add(v.position.x, v.position.y, v.position.z);
         }
     }
@@ -96,7 +96,7 @@ public class Mesh extends Renderable {
 
     @Override
     public void light(Vector<Node> lights, int lightCount, Node node, Camera camera, Vec4 ambientColor, Vec4 diffuseColor) {
-        for(Vertex v : vertices) {
+        for(SceneVertex v : vertices) {
             v.light(lights, lightCount, node.model, node.modelIT, ambientColor, diffuseColor);
         }
     }

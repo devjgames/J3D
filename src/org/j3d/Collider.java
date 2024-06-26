@@ -2,6 +2,8 @@ package org.j3d;
 
 import java.util.Vector;
 
+import org.lwjgl.input.Mouse;
+
 public class Collider {
 
     public static interface ContactListener {
@@ -105,14 +107,14 @@ public class Collider {
     public boolean move(Camera camera, Node root, Node node, Game game) throws Exception {
         boolean moving = false;
         velocity.x = velocity.z = 0;
-        if(game.buttonDown(0)) {
-            float dX = game.w() / 2 - game.mouseX();
-            float dY = game.mouseY() - game.h() / 2;
+        if(Mouse.isButtonDown(0)) {
+            float dX = game.w() / 2 - Mouse.getX();
+            float dY = Mouse.getY() - game.h() / 2;
             float d = (float)Math.sqrt(dX * dX + dY * dY);
             float y = velocity.y;
             float degrees;
             velocity.y = 0;
-            camera.move(velocity, dX / d * speed, dY / d * speed, null);
+            camera.move(velocity, dX / d * speed, -dY / d * speed, null);
             if(velocity.length() > 1) {
                 moving = true;
                 f.set(velocity);
