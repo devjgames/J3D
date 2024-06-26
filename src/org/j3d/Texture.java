@@ -4,6 +4,7 @@ import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -75,6 +76,8 @@ public class Texture implements Resource {
     public int getID() {
         if(id == 0) {
             ByteBuffer buf = BufferUtils.createByteBuffer(pixels.length);
+
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
             buf.put(pixels);
             buf.flip();

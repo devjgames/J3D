@@ -82,6 +82,7 @@ public final class Renderer implements Resource {
             program = 0;
             throw new Exception("failed to link shader program");
         }
+        GL20.glUseProgram(program);
         uProjection = GL20.glGetUniformLocation(program, "uProjection");
         uView = GL20.glGetUniformLocation(program, "uView");
         uModel = GL20.glGetUniformLocation(program, "uModel");
@@ -89,6 +90,7 @@ public final class Renderer implements Resource {
         uTextureEnabled = GL20.glGetUniformLocation(program, "uTextureEnabled");
         uTexture2 = GL20.glGetUniformLocation(program, "uTexture2");
         uTexture2Enabled = GL20.glGetUniformLocation(program, "uTexture2Enabled");
+        GL20.glUseProgram(0);
 
         vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
@@ -156,17 +158,17 @@ public final class Renderer implements Resource {
             GL11.glDisable(GL11.GL_BLEND);
         }
         if(texture != null) {
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL20.glUniform1i(uTextureEnabled, 1);
             GL20.glUniform1i(uTexture, 0);
-            GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getID());
         } else {
             GL20.glUniform1i(uTextureEnabled, 0);
         }
         if(texture2 != null) {
+            GL13.glActiveTexture(GL13.GL_TEXTURE1);
             GL20.glUniform1i(uTexture2Enabled, 1);
             GL20.glUniform1i(uTexture2, 1);
-            GL13.glActiveTexture(GL13.GL_TEXTURE1);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture2.getID());
         } else {
             GL20.glUniform1i(uTexture2Enabled, 0);
@@ -221,9 +223,9 @@ public final class Renderer implements Resource {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL20.glUniform1i(uTextureEnabled, 1);
         GL20.glUniform1i(uTexture, 0);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
         GL20.glUniform1i(uTexture2Enabled, 0);
 
@@ -322,6 +324,12 @@ public final class Renderer implements Resource {
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, count);
     }
 
+    public void end() {
+        GL30.glBindVertexArray(0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GL20.glUseProgram(0);
+    }
+
     @Override
     public void destroy() throws Exception {
         if(program != 0) {
@@ -339,13 +347,16 @@ public final class Renderer implements Resource {
     }
 
     private void render(SceneVertex v) {
-        int count = vBuf.position() + 11 * 6000;
+        int count = vBuf.position();
 
-        if(count > vBuf.capacity()) {
+        if(count + 11 > vBuf.capacity()) {
+            count += 11 * 6000;
+
             FloatBuffer newBuf = BufferUtils.createFloatBuffer(count);
 
             System.out.println("increasing vertex buffer capacity " + count);
 
+            vBuf.flip();
             newBuf.put(vBuf);
             vBuf = newBuf;
         }

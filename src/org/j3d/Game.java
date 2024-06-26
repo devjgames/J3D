@@ -32,12 +32,6 @@ public final class Game implements Resource {
 
         GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
         GLFW.glfwWindowHint(GLFW.GLFW_DOUBLEBUFFER, GLFW.GLFW_TRUE);
-        GLFW.glfwWindowHint(GLFW.GLFW_RED_BITS, 8);
-        GLFW.glfwWindowHint(GLFW.GLFW_GREEN_BITS, 8);
-        GLFW.glfwWindowHint(GLFW.GLFW_BLUE_BITS, 8);
-        GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, 8);
-        GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, 24);
-        GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, 8);
         GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -60,7 +54,10 @@ public final class Game implements Resource {
         GLFW.glfwGetWindowSize(window, this.w, this.h);
 
         scale = this.w[0];
-        scale = w() / scale;
+
+        GLFW.glfwGetFramebufferSize(window, this.w, this.h);
+
+        scale = this.w[0] / scale;
 
         resetTimer();
     }
