@@ -1,11 +1,13 @@
-attribute vec3 vsInPosition;
-attribute vec2 vsInTextureCoordinate;
-attribute vec2 vsInTextureCoordinate2;
-attribute vec4 vsInColor;
+#version 150
 
-varying vec2 fsInTextureCoordinate;
-varying vec2 fsInTextureCoordinate2;
-varying vec4 fsInColor;
+in vec3 vsInPosition;
+in vec2 vsInTextureCoordinate;
+in vec2 vsInTextureCoordinate2;
+in vec4 vsInColor;
+
+out vec2 fsInTextureCoordinate;
+out vec2 fsInTextureCoordinate2;
+out vec4 fsInColor;
 
 uniform mat4 uProjection;
 uniform mat4 uView;

@@ -7,6 +7,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 public final class Renderer implements Resource {
 
@@ -31,6 +32,7 @@ public final class Renderer implements Resource {
     private int uProjection, uView, uModel;
     private int uTexture, uTextureEnabled;
     private int uTexture2, uTexture2Enabled;
+    private int vao = 0;
     private int vbo = 0;
     private final Mat4 matrix = new Mat4();
 
@@ -88,11 +90,11 @@ public final class Renderer implements Resource {
         uTexture2 = GL20.glGetUniformLocation(program, "uTexture2");
         uTexture2Enabled = GL20.glGetUniformLocation(program, "uTexture2Enabled");
 
+        vao = GL30.glGenVertexArrays();
         vbo = GL15.glGenBuffers();
     }
 
     public void clear() {
-        GL11.glViewport(0, 0, game.w(), game.h());
         cullState = CullState.BACK;
         depthTestEnabled = true;
         depthWriteEnabled = true;
@@ -108,8 +110,9 @@ public final class Renderer implements Resource {
         GL11.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
-        GL20.glUseProgram(program);
+        GL30.glBindVertexArray(vao);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL20.glUseProgram(program);
         GL20.glEnableVertexAttribArray(0);
         GL20.glEnableVertexAttribArray(1);
         GL20.glEnableVertexAttribArray(2);
@@ -120,9 +123,9 @@ public final class Renderer implements Resource {
         GL20.glVertexAttribPointer(3, 4, GL11.GL_FLOAT, false, 11 * 4, 3 * 4 + 4 * 4);
 
         projection.put(fBuf);
-        GL20.glUniformMatrix4(uProjection, false, fBuf);
+        GL20.glUniformMatrix4fv(uProjection, false, fBuf);
         view.put(fBuf);
-        GL20.glUniformMatrix4(uView, false, fBuf);
+        GL20.glUniformMatrix4fv(uView, false, fBuf);
     }
 
     public void setState() {
@@ -175,7 +178,7 @@ public final class Renderer implements Resource {
         int rendered = 0;
 
         model.put(fBuf);
-        GL20.glUniformMatrix4(uModel,false, fBuf);
+        GL20.glUniformMatrix4fv(uModel,false, fBuf);
 
         vBuf.position(0);
         vBuf.limit(vBuf.capacity());
@@ -205,12 +208,12 @@ public final class Renderer implements Resource {
     public void setupSprites() {
         matrix.toIdentity().ortho(0, game.w(), game.h(), 0, -1, 1);
         matrix.put(fBuf);
-        GL20.glUniformMatrix4(uProjection, false, fBuf);
+        GL20.glUniformMatrix4fv(uProjection, false, fBuf);
 
         matrix.toIdentity();
         matrix.put(fBuf);
-        GL20.glUniformMatrix4(uView, false, fBuf);
-        GL20.glUniformMatrix4(uModel, false, fBuf);
+        GL20.glUniformMatrix4fv(uView, false, fBuf);
+        GL20.glUniformMatrix4fv(uModel, false, fBuf);
 
         GL11.glDisable(GL11.GL_CULL_FACE);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
@@ -287,25 +290,25 @@ public final class Renderer implements Resource {
         render(vertex);
     }
 
-    public void render(String text, int cW, int cH, int cols, int lineSpacing, int x, int y, Vec4 color) {
-        render(text, cW, cH, cols, lineSpacing, x, y, color.x, color.y, color.z, color.w);
+    public void render(String text, int scale, int cW, int cH, int cols, int lineSpacing, int x, int y, Vec4 color) {
+        render(text, scale, cW, cH, cols, lineSpacing, x, y, color.x, color.y, color.z, color.w);
     }
 
-    public void render(String text, int cW, int cH, int cols, int lineSpacing, int x, int y, float r, float g, float b, float a) {
+    public void render(String text, int scale, int cW, int cH, int cols, int lineSpacing, int x, int y, float r, float g, float b, float a) {
         int sX = x;
         for (int i = 0; i != text.length(); i++) {
             char c = text.charAt(i);
             if (c == '\n') {
                 x = sX;
-                y += lineSpacing;
-                y += cH;
+                y += lineSpacing * scale;
+                y += cH * scale;
             } else {
                 int j = (int) c - (int) ' ';
                 if (j >= 0 && j < 100) {
                     int col = j % cols;
                     int row = j / cols;
-                    render(col * cW, row * cH, cW, cH, x, y, cW, cH, r, g, b, a);
-                    x += cW;
+                    render(col * cW, row * cH, cW, cH, x, y, cW * scale, cH * scale, r, g, b, a);
+                    x += cW * scale;
                 }
             }
         }
@@ -328,6 +331,10 @@ public final class Renderer implements Resource {
         if(vbo != 0) {
             GL15.glDeleteBuffers(vbo);
             vbo = 0;
+        }
+        if(vao != 0) {
+            GL30.glDeleteVertexArrays(vao);
+            vao = 0;
         }
     }
 

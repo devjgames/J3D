@@ -6,7 +6,6 @@ import org.j3d.MeshBuilder;
 import org.j3d.Node;
 import org.j3d.Scene;
 import org.j3d.demo.App.Demo;
-import org.lwjgl.input.Mouse;
 
 public class Demo3 extends Demo {
 
@@ -48,8 +47,8 @@ public class Demo3 extends Demo {
     public void nextFrame(Game game) throws Exception {
         scene.render(game);
 
-        if(Mouse.isButtonDown(0)) {
-            scene.camera.rotate(-Mouse.getDX(), -Mouse.getDY());
+        if(game.isButtonDown(0)) {
+            scene.camera.rotate(-game.getDeltaX(), -game.getDeltaY());
         }
     }
     

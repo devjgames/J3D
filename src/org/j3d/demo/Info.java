@@ -16,7 +16,8 @@ public class Info extends NodeComponent {
         if(visible) {
             game().renderer().beginSprite(game().assets().load(IO.file(font)));
             game().renderer().render( 
-                "FPS = " + game().frameRate() + "\nTRI = " + scene().getTrianglesRendered(), 
+                "FPS = " + game().frameRate() + "\nTRI = " + scene().getTrianglesRendered(),
+                game().getScale(), 
                 cw, ch, 15, 5, 10, 10, 1, 1, 1, 1);
             game().renderer().endSprite();
         }

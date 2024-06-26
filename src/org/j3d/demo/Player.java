@@ -8,8 +8,7 @@ import org.j3d.Sound;
 import org.j3d.Triangle;
 import org.j3d.Vec3;
 import org.j3d.Collider.ContactListener;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
+import org.lwjgl.glfw.GLFW;
 
 public class Player extends NodeComponent implements ContactListener {
 
@@ -45,11 +44,11 @@ public class Player extends NodeComponent implements ContactListener {
             return;
         }
 
-        if(Mouse.isButtonDown(1)) {
-            scene().camera.rotate(-Mouse.getDX(), -Mouse.getDY());
+        if(game().isButtonDown(1)) {
+            scene().camera.rotate(-game().getDeltaX(), -game().getDeltaY());
         }
         if(jumpAmount > 0) {
-            boolean down = Keyboard.isKeyDown(Keyboard.KEY_SPACE);
+            boolean down = game().isKeyDown(GLFW.GLFW_KEY_SPACE);
             if(down && collider.getOnGround()) {
                 collider.velocity.y = jumpAmount;
                 jump.play(false);
